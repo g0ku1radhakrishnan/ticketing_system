@@ -1,0 +1,143 @@
+{% include 'cutter_header.html' %} 
+
+<style>
+    /* Status Chip Styling */
+    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px;
+        background: var(--c-done); color: var(--c-done-ink); font-size: 13px; font-weight: 600; }
+    
+    /* Table Wrapper - Desktop Default */
+    .table-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; margin-top: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .table-responsive { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    th { padding: 16px 18px; background: var(--bg); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--line); font-weight: 700; }
+    td { padding: 16px 18px; border-bottom: 1px solid var(--line); font-size: 15px; vertical-align: middle; transition: background 0.15s; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--bg); }
+    
+    /* Typography & Badges */
+    .ticket-id { font-weight: 700; color: var(--ink); }
+    .date-text { color: var(--muted); font-size: 13px; }
+    .notes-text { color: var(--muted); font-size: 14px; white-space: normal; min-width: 150px; }
+    
+    /* Increased Status Badge Size */
+    .status-badge { 
+        display: inline-flex; 
+        align-items: center; 
+        padding: 8px 14px; /* Increased padding */
+        border-radius: 10px; 
+        font-size: 14px; /* Increased font size */
+        font-weight: 800; /* Bolder text */
+        text-transform: uppercase; 
+        letter-spacing: 0.05em; 
+        background: var(--c-done); 
+        color: var(--c-done-ink); 
+    }
+
+    /* Back Link */
+    .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--muted); text-decoration: none; margin-bottom: 16px; transition: color 0.15s; }
+    .back-link:hover { color: var(--brand); }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 56px 20px; }
+    .empty-state i { font-size: 42px; color: var(--line); margin-bottom: 16px; }
+    .empty-state p { color: var(--muted); margin: 0; font-size: 16px; font-weight: 500; }
+
+    /* ========================================= */
+    /* MOBILE CARD VIEW FOR TABLES               */
+    /* ========================================= */
+    @media (max-width: 768px) {
+        .table-responsive { overflow-x: visible; }
+        .table-card { border: none; background: transparent; box-shadow: none; margin-top: 16px; }
+        
+        /* Force table elements to display as blocks */
+        table, thead, tbody, th, td, tr { display: block; white-space: normal; }
+        
+        /* Hide column headers */
+        thead { display: none; }
+        
+        /* Style rows as individual cards */
+        tbody tr {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            overflow: hidden;
+            transition: transform 0.15s;
+        }
+        
+        /* Style cells as rows within the card */
+        tbody td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        
+        /* Add labels using data-label attribute */
+        tbody td::before {
+            content: attr(data-label);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            font-weight: 700;
+            display: block;
+        }
+        
+        /* Remove empty state extra borders on mobile */
+        tr.empty-row td { display: block; border-bottom: none; }
+        tr.empty-row td::before { display: none; }
+    }
+</style>
+
+<main>
+    <a href="/cutter_tailorapp/cutter_home" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+    
+    <h1>Completed Jobs</h1>
+    <p class="sub"><span class="chip"><i class="fa-solid fa-check-double"></i> Cut by {{ cutter.name }}</span></p>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticket No</th>
+                        <th>Customer</th>
+                        <th>Garment Type</th>
+                        <th>Qty</th>
+                        <th>Order Date</th>
+                        <th>Cutting Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td data-label="Ticket No"><span class="ticket-id">{{ ticket.ticket_number|default:ticket.ticket_id }}</span></td>
+                        <td data-label="Customer">{{ ticket.customer_id.name }}</td>
+                        <td data-label="Garment Type">{{ ticket.garment_type }}</td>
+                        <td data-label="Qty">{{ ticket.quantity }}</td>
+                        <td data-label="Order Date"><span class="date-text">{{ ticket.order_date|date:"M. d, Y, g:i a" }}</span></td>
+                        <td data-label="Cutting Status"><span class="status-badge">{{ ticket.cutting_status|title }}</span></td>
+                        <td data-label="Notes"><div class="notes-text">{{ ticket.notes|default:"-" }}</div></td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                                <p>You have no completed jobs yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+{% include 'cutter_footer.html' %}

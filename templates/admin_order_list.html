@@ -1,0 +1,156 @@
+{% include 'admin_header.html' %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{{ page_title }}</title>
+
+    <style>
+        /* All styles are scoped to .mt so they never clash with your header/footer */
+        .mt {
+            --mt-bg: var(--bg, #FCF8F6);
+            --mt-surface: var(--surface, #FFFFFF);
+            --mt-ink: var(--ink, #1F1626);
+            --mt-muted: var(--muted, #756B7A);
+            --mt-line: var(--line, #EEE5E8);
+            --mt-brand: var(--brand, #5B2145);
+            --mt-brand-ink: var(--brand-ink, #FFFFFF);
+            --mt-danger: #B3262F;
+            --mt-font: var(--font, 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif);
+            font-family: var(--mt-font);
+            color: var(--mt-ink);
+        }
+        .mt *, .mt *::before, .mt *::after { box-sizing: border-box; }
+        .mt a { text-decoration: none; }
+        :focus-visible { outline: 2px solid var(--mt-brand, #5B2145); outline-offset: 2px; }
+
+        /* Page heading */
+        .mt .mt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+        .mt .mt-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .mt h1 { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 700; }
+        .mt .mt-count { font-size: 13px; font-weight: 600; padding: 2px 12px; border-radius: 999px; background: var(--mt-line); color: var(--mt-muted); }
+
+        /* Buttons */
+        .mt .mt-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 10px 20px; border-radius: 999px; border: 1px solid var(--mt-brand);
+            background: var(--mt-brand); color: var(--mt-brand-ink); font-weight: 600; font-size: 15px;
+            transition: filter .15s, background .15s;
+        }
+        .mt .mt-btn:hover { filter: brightness(1.12); }
+        .mt .mt-btn.ghost { background: transparent; color: var(--mt-brand); }
+        .mt .mt-btn.ghost:hover { background: var(--mt-line); filter: none; }
+        .mt .mt-btn.sm { padding: 7px 16px; font-size: 13px; }
+
+        /* Table */
+        .mt .mt-table-wrap { background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; overflow-x: auto; }
+        .mt table { width: 100%; min-width: 900px; border-collapse: collapse; }
+        .mt th { text-align: left; font-size: 13px; font-weight: 600; color: var(--mt-muted); background: var(--mt-bg); padding: 14px 16px; border-bottom: 1px solid var(--mt-line); white-space: nowrap; }
+        .mt td { padding: 14px 16px; border-bottom: 1px solid var(--mt-line); vertical-align: middle; }
+        .mt tbody tr:last-child td { border-bottom: 0; }
+        .mt tbody tr:hover { background: var(--mt-bg); }
+        .mt td.tk-cell b { color: var(--mt-brand); }
+        .mt .workers { font-size: 14px; line-height: 1.7; }
+        .mt .workers b { color: var(--mt-muted); font-weight: 600; }
+        .mt .unassigned { color: var(--mt-danger); font-weight: 600; }
+        .mt .empty { text-align: center; color: var(--mt-muted); padding: 36px 16px; }
+
+        /* Status pills: colour follows the value */
+        .mt .pill { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; background: var(--mt-line); color: var(--mt-ink); }
+        .mt .pill.s-pending { background: #FDEBC8; color: #8A5A00; }
+        .mt .pill.s-in-progress { background: #DFE7FB; color: #2C4A8F; }
+        .mt .pill.s-completed, .mt .pill.s-delivered { background: #D5EFD9; color: #1E6B3C; }
+        .mt .pill.s-cancelled { background: #FBD9DC; color: #B3262F; }
+
+        @media (min-width: 900px) { .mt h1 { font-size: 34px; } }
+
+        /* Phones and tablets: each ticket becomes a card */
+        @media (max-width: 899px) {
+            .mt .mt-btn.back { flex: 1 1 100%; }
+            .mt .mt-table-wrap { background: none; border: 0; border-radius: 0; overflow: visible; }
+            .mt table, .mt tbody { display: block; width: 100%; min-width: 0; }
+            .mt thead { display: none; }
+            .mt tr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; background: var(--mt-surface);
+                border: 1px solid var(--mt-line); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+            .mt tbody tr:hover { background: var(--mt-surface); }
+            .mt td { display: block; padding: 0; border: 0; min-width: 0; word-break: break-word; }
+            .mt td::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 600; color: var(--mt-muted); margin-bottom: 2px; }
+            .mt td.tk-cell { grid-column: 1 / -1; font-size: 18px; }
+            .mt td.cust-cell { grid-column: 1 / -1; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid var(--mt-line); }
+            .mt td.tk-cell::before, .mt td.cust-cell::before { display: none; }
+            .mt td.wide-cell { grid-column: 1 / -1; }
+            .mt td.actions-cell { grid-column: 1 / -1; padding-top: 4px; }
+            .mt td.actions-cell::before { display: none; }
+            .mt td.actions-cell .mt-btn { width: 100%; }
+            .mt td.empty { grid-column: 1 / -1; text-align: center; }
+            .mt td.empty::before { display: none; }
+            .mt tr:has(td.empty) { display: block; padding: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) { .mt * { transition: none !important; } }
+    </style>
+</head>
+<body>
+
+<main class="mt">
+
+    <div class="mt-head">
+        <div class="mt-title">
+            <h1>{{ page_title }}</h1>
+            <span class="mt-count">{{ tickets|length }}</span>
+        </div>
+        <a href="/admin_home" class="mt-btn ghost back">← Back to Dashboard</a>
+    </div>
+
+    <div class="mt-table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket No</th>
+                    <th>Customer</th>
+                    <th>Garment (Qty)</th>
+                    <th>Order Date</th>
+                    <th>Delivery Date</th>
+                    <th>Overall Status</th>
+                    <th>Assigned Workers</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td class="tk-cell" data-label="Ticket No"><b>{{ ticket.ticket_number|default:ticket.ticket_id }}</b></td>
+                    <td class="cust-cell" data-label="Customer">{{ ticket.customer_id.name }}</td>
+                    <td data-label="Garment (Qty)">{{ ticket.garment_type }} (x{{ ticket.quantity }})</td>
+                    <td data-label="Order Date">{{ ticket.order_date}}</td>
+                    <td data-label="Delivery Date">{{ ticket.expected_delivery_date }}</td>
+                    <td data-label="Overall Status"><span class="pill s-{{ ticket.status|slugify }}">{{ ticket.status|title }}</span></td>
+                    <td class="wide-cell" data-label="Assigned Workers">
+                        <div class="workers">
+                            <b>Cutter:</b> {% if ticket.cutter_id.name %}{{ ticket.cutter_id.name }}{% else %}<span class="unassigned">Unassigned</span>{% endif %}<br>
+                            <b>Tailor:</b> {% if ticket.tailor_id.name %}{{ ticket.tailor_id.name }}{% else %}<span class="unassigned">Unassigned</span>{% endif %}
+                        </div>
+                    </td>
+                    <td class="actions-cell">
+                        <!-- Assumes your edit URL is /admin_update_ticket/<id> - adjust if yours is named differently -->
+                        <a href="/admin_update_ticket/{{ ticket.ticket_id }}" class="mt-btn sm ghost">View/Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty">
+                        No records found for {{ page_title|lower }}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+{% include 'admin_footer.html' %}
+
+</body>
+</html>

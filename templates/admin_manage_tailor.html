@@ -1,0 +1,294 @@
+{% include 'admin_header.html' %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Manage Tailors</title>
+
+    <style>
+        /* All styles are scoped to .mt so they never clash with your header/footer */
+        .mt {
+            --mt-bg: var(--bg, #FCF8F6);
+            --mt-surface: var(--surface, #FFFFFF);
+            --mt-ink: var(--ink, #1F1626);
+            --mt-muted: var(--muted, #756B7A);
+            --mt-line: var(--line, #EEE5E8);
+            --mt-brand: var(--brand, #5B2145);
+            --mt-brand-ink: var(--brand-ink, #FFFFFF);
+            --mt-danger: #B3262F;
+            --mt-danger-soft: #FBD9DC;
+            --mt-green: #1E6B3C;
+            --mt-green-soft: #D5EFD9;
+            --mt-font: var(--font, 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif);
+            font-family: var(--mt-font);
+            color: var(--mt-ink);
+        }
+        .mt *, .mt *::before, .mt *::after { box-sizing: border-box; }
+        .mt h1 { margin: 0 0 4px; font-size: 28px; line-height: 1.15; font-weight: 700; }
+        .mt h2 { margin: 0; font-size: 18px; font-weight: 700; }
+        .mt .mt-sub { margin: 0 0 20px; color: var(--mt-muted); }
+        .mt a { text-decoration: none; }
+        .mt button { font: inherit; cursor: pointer; }
+
+        /* Buttons */
+        .mt .mt-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 11px 22px; border-radius: 999px; border: 1px solid var(--mt-brand);
+            background: var(--mt-brand); color: var(--mt-brand-ink); font-weight: 600; font-size: 15px;
+            transition: filter .15s, background .15s;
+        }
+        .mt .mt-btn:hover { filter: brightness(1.12); }
+        .mt .mt-btn.ghost { background: transparent; color: var(--mt-brand); }
+        .mt .mt-btn.ghost:hover { background: var(--mt-line); filter: none; }
+        .mt .mt-btn.green { background: var(--mt-green); border-color: var(--mt-green); color: #fff; }
+        .mt .mt-btn.danger { background: transparent; color: var(--mt-danger); border-color: var(--mt-danger); }
+        .mt .mt-btn.danger:hover { background: var(--mt-danger-soft); filter: none; }
+        .mt .mt-btn.sm { padding: 7px 16px; font-size: 13px; }
+        .mt :focus-visible { outline: 2px solid var(--mt-brand); outline-offset: 2px; }
+
+        /* Cards and forms */
+        .mt .mt-card { background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; padding: 22px 18px; }
+        .mt .mt-card > h2 { margin-bottom: 16px; font-size: 20px; }
+        .mt .mt-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .mt .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        .mt .field input, .mt .field select {
+            width: 100%; padding: 12px 14px; font: inherit; color: var(--mt-ink); background: var(--mt-bg);
+            border: 1px solid var(--mt-line); border-radius: 12px; outline: none;
+        }
+        .mt .field input::placeholder { color: var(--mt-muted); }
+        .mt .field input:focus, .mt .field select:focus { border-color: var(--mt-brand); box-shadow: 0 0 0 3px rgba(91, 33, 69, .12); }
+        .mt .mt-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 22px; }
+
+        /* Toolbar + list heading */
+        .mt .mt-toolbar { margin-bottom: 18px; }
+        .mt .mt-list-head { display: flex; align-items: center; gap: 10px; margin: 26px 0 14px; }
+        .mt .mt-count { font-size: 13px; font-weight: 600; padding: 2px 12px; border-radius: 999px; background: var(--mt-line); color: var(--mt-muted); }
+
+        /* Table */
+        .mt .mt-table-wrap { background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; overflow: hidden; max-width: none !important; }
+        .mt table { width: 100%; border-collapse: collapse; }
+        .mt th { text-align: left; font-size: 13px; font-weight: 600; color: var(--mt-muted); background: var(--mt-bg); padding: 14px 16px; border-bottom: 1px solid var(--mt-line); white-space: nowrap; }
+        .mt td { padding: 14px 16px; border-bottom: 1px solid var(--mt-line); vertical-align: middle; }
+        .mt tbody tr:last-child td { border-bottom: 0; }
+        .mt tbody tr:hover { background: var(--mt-bg); }
+        .mt .who { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        .mt .av { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+            background: var(--mt-brand); color: var(--mt-brand-ink); font-size: 15px; font-weight: 700; }
+        .mt .pill { display: inline-block; padding: 2px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--mt-line); }
+        .mt .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .mt .empty { text-align: center; color: var(--mt-muted); padding: 32px 16px; }
+
+        @media (min-width: 600px) {
+            .mt .mt-grid { grid-template-columns: 1fr 1fr; }
+            .mt .mt-grid .full { grid-column: 1 / -1; }
+            .mt .mt-card { padding: 28px; }
+        }
+        @media (min-width: 900px) { .mt h1 { font-size: 34px; } }
+
+        /* Phones and tablets: each tailor becomes a card */
+        @media (max-width: 899px) {
+            .mt .mt-btn.add { width: 100%; }
+            .mt .mt-table-wrap { background: none; border: 0; border-radius: 0; overflow: visible; }
+            .mt table, .mt tbody, .mt tr, .mt td { display: block; width: 100%; }
+            .mt thead { display: none; }
+            .mt tr { background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+            .mt tbody tr:hover { background: var(--mt-surface); }
+            .mt td { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; border: 0; text-align: right; word-break: break-word; }
+            .mt td::before { content: attr(data-label); font-size: 13px; font-weight: 600; color: var(--mt-muted); text-align: left; flex: none; }
+            .mt td.sl { display: none; }
+            .mt td.name-cell { padding: 0 0 12px; margin-bottom: 6px; border-bottom: 1px solid var(--mt-line); justify-content: flex-start; text-align: left; font-size: 17px; }
+            .mt td.name-cell::before { display: none; }
+            .mt td.actions-cell { padding-top: 14px; justify-content: stretch; }
+            .mt td.actions-cell::before { display: none; }
+            .mt .row-actions { width: 100%; }
+            .mt .row-actions .mt-btn { flex: 1; }
+            .mt td.empty { display: block; text-align: center; background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; }
+            .mt td.empty::before { display: none; }
+            .mt tr:has(td.empty) { padding: 0; border: 0; background: none; }
+        }
+        @media (prefers-reduced-motion: reduce) { .mt * { transition: none !important; } }
+    </style>
+</head>
+<body>
+
+<main class="mt">
+
+<h1>Manage Tailors</h1>
+
+{% if update_data %}
+<!-- ======= UPDATE FORM ======= -->
+<p class="mt-sub">Update Tailor</p>
+<form method="POST" class="mt-card">
+    {% csrf_token %}
+    <div class="mt-grid">
+        <div class="field full">
+            <label for="u_name">Name</label>
+            <input type="text" id="u_name" name="name" value="{{ update_data.name }}" required>
+        </div>
+        <div class="field">
+            <label for="u_phone">Phone</label>
+            <input type="number" id="u_phone" name="phone" value="{{ update_data.phone }}" required>
+        </div>
+        <div class="field">
+            <label for="u_email">Email</label>
+            <input type="email" id="u_email" name="email" value="{{ update_data.email }}" required>
+        </div>
+        <div class="field">
+            <label for="u_place">Place</label>
+            <input type="text" id="u_place" name="place" value="{{ update_data.place }}" required>
+        </div>
+        <div class="field">
+            <label for="u_age">Age</label>
+            <input type="number" id="u_age" name="age" value="{{ update_data.age }}" required>
+        </div>
+        <div class="field">
+            <label for="u_gender">Gender</label>
+            <select id="u_gender" name="gender" required>
+                <option value="Male" {% if update_data.gender == 'Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if update_data.gender == 'Female' %}selected{% endif %}>Female</option>
+                <option value="Other" {% if update_data.gender == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="u_uname">Username</label>
+            <input type="text" id="u_uname" name="uname" value="{{ update_data.login_id.username }}" required>
+        </div>
+        <div class="field full">
+            <label for="u_pswd">Password</label>
+            <input type="password" id="u_pswd" name="pswd" value="{{ update_data.login_id.password }}" minlength="6" required>
+        </div>
+    </div>
+    <div class="mt-actions">
+        <a href="/admin_manage_tailor" class="mt-btn ghost">Cancel</a>
+        <button type="submit" class="mt-btn">Update</button>
+    </div>
+</form>
+
+<!-- ======= VIEW TAILORS & ADD BUTTON ======= -->
+{% else %}
+<!-- ======= ADD NEW BUTTON ======= -->
+<div class="mt-toolbar">
+    <button type="button" class="mt-btn green add" onclick="toggleAddForm()">+ Add New Tailor</button>
+</div>
+
+<!-- ======= ADD FORM (Hidden by default) ======= -->
+<div id="addFormContainer" class="mt-card" style="display: none; margin-bottom: 8px;">
+    <h2>Add Tailor</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mt-grid">
+            <div class="field full">
+                <label for="a_name">Name</label>
+                <input type="text" id="a_name" name="name" placeholder="Enter name" required>
+            </div>
+            <div class="field">
+                <label for="a_phone">Phone</label>
+                <input type="number" id="a_phone" name="phone" placeholder="Enter phone" required>
+            </div>
+            <div class="field">
+                <label for="a_email">Email</label>
+                <input type="email" id="a_email" name="email" placeholder="Enter email" required>
+            </div>
+            <div class="field">
+                <label for="a_place">Place</label>
+                <input type="text" id="a_place" name="place" placeholder="Enter place" required>
+            </div>
+            <div class="field">
+                <label for="a_age">Age</label>
+                <input type="number" id="a_age" name="age" placeholder="Enter age" required>
+            </div>
+            <div class="field">
+                <label for="a_gender">Gender</label>
+                <select id="a_gender" name="gender" required>
+                    <option value="">Select gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="a_uname">Username</label>
+                <input type="text" id="a_uname" name="uname" placeholder="Enter username" required>
+            </div>
+            <div class="field full">
+                <label for="a_pswd">Password</label>
+                <input type="password" id="a_pswd" name="pswd" placeholder="Enter password" minlength="6" required>
+            </div>
+        </div>
+        <div class="mt-actions">
+            <button type="button" class="mt-btn ghost" onclick="toggleAddForm()">Cancel</button>
+            <button type="submit" class="mt-btn">Add Tailor</button>
+        </div>
+    </form>
+</div>
+
+<!-- ======= VIEW TAILORS ======= -->
+<div class="mt-list-head">
+    <h2>All Tailors</h2>
+    <span class="mt-count">{{ tailors|length }}</span>
+</div>
+
+<div class="mt-table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Sl No</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Place</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Username</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tailors %}
+            <tr>
+                <td class="sl" data-label="Sl No">{{ forloop.counter }}</td>
+                <td class="name-cell" data-label="Name">
+                    <span class="who"><span class="av" aria-hidden="true">{{ t.name|slice:":1"|upper }}</span>{{ t.name }}</span>
+                </td>
+                <td data-label="Phone">{{ t.phone }}</td>
+                <td data-label="Email">{{ t.email }}</td>
+                <td data-label="Place">{{ t.place }}</td>
+                <td data-label="Age">{{ t.age }}</td>
+                <td data-label="Gender"><span class="pill">{{ t.gender }}</span></td>
+                <td data-label="Username">{{ t.login_id.username }}</td>
+                <td class="actions-cell">
+                    <div class="row-actions">
+                        <a href="/admin_update_tailor/{{ t.tailor_id }}" class="mt-btn sm ghost">Edit</a>
+                        <a href="/admin_delete_tailor/{{ t.tailor_id }}" class="mt-btn sm danger"
+                           onclick="return confirm('Delete this tailor?')">Delete</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" class="empty">No tailors added yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- JavaScript to handle the button click -->
+<script>
+    function toggleAddForm() {
+        var form = document.getElementById("addFormContainer");
+        if (form.style.display === "none") {
+            form.style.display = "block";
+            form.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+            form.style.display = "none";
+        }
+    }
+</script>
+{% endif %}
+
+</main>
+
+{% include 'admin_footer.html' %}
+</body>
+</html>

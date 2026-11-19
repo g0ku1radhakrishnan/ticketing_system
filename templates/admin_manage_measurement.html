@@ -1,0 +1,558 @@
+{% include 'admin_header.html' %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Manage Measurements</title>
+
+    <style>
+        /* All styles are scoped to .mt so they never clash with your header/footer */
+        .mt {
+            --mt-bg: var(--bg, #FCF8F6);
+            --mt-surface: var(--surface, #FFFFFF);
+            --mt-ink: var(--ink, #1F1626);
+            --mt-muted: var(--muted, #756B7A);
+            --mt-line: var(--line, #EEE5E8);
+            --mt-brand: var(--brand, #5B2145);
+            --mt-brand-ink: var(--brand-ink, #FFFFFF);
+            --mt-danger: #B3262F;
+            --mt-danger-soft: #FBD9DC;
+            --mt-font: var(--font, 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif);
+            font-family: var(--mt-font);
+            color: var(--mt-ink);
+        }
+        .mt *, .mt *::before, .mt *::after { box-sizing: border-box; }
+        .mt h1 { margin: 0 0 18px; font-size: 28px; line-height: 1.15; font-weight: 700; }
+        .mt h2 { margin: 0; font-size: 18px; font-weight: 700; }
+        .mt a { text-decoration: none; }
+        .mt button { font: inherit; cursor: pointer; }
+        .mt :focus-visible { outline: 2px solid var(--mt-brand); outline-offset: 2px; }
+
+        /* Buttons */
+        .mt .mt-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 11px 22px; border-radius: 999px; border: 1px solid var(--mt-brand);
+            background: var(--mt-brand); color: var(--mt-brand-ink); font-weight: 600; font-size: 15px;
+            transition: filter .15s, background .15s;
+        }
+        .mt .mt-btn:hover { filter: brightness(1.12); }
+        .mt .mt-btn.ghost { background: transparent; color: var(--mt-brand); }
+        .mt .mt-btn.ghost:hover { background: var(--mt-line); filter: none; }
+        .mt .mt-btn.danger { background: transparent; color: var(--mt-danger); border-color: var(--mt-danger); }
+        .mt .mt-btn.danger:hover { background: var(--mt-danger-soft); filter: none; }
+        .mt .mt-btn.sm { padding: 7px 16px; font-size: 13px; }
+        .mt .mt-btn.green { background: #1E6B3C; border-color: #1E6B3C; color: #fff; }
+        .mt .mt-toolbar { margin-bottom: 18px; }
+
+        /* Form card */
+        .mt .mt-card { background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; padding: 22px 18px; }
+        .mt .mt-card > h2 { margin-bottom: 18px; font-size: 20px; }
+        .mt .mt-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--mt-line); }
+        .mt .mt-section h3 { margin: 0 0 14px; font-size: 15px; font-weight: 700; color: var(--mt-brand); }
+        .mt .mt-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .mt .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        .mt .field input, .mt .field textarea {
+            width: 100%; padding: 12px 14px; font: inherit; color: var(--mt-ink); background: var(--mt-bg);
+            border: 1px solid var(--mt-line); border-radius: 12px; outline: none;
+        }
+        .mt .field textarea { resize: vertical; min-height: 96px; }
+        .mt .field input::placeholder, .mt .field textarea::placeholder { color: var(--mt-muted); }
+        .mt .field input:focus, .mt .field textarea:focus { border-color: var(--mt-brand); box-shadow: 0 0 0 3px rgba(91, 33, 69, .12); }
+        .mt .mt-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 24px; }
+
+        /* List heading + search */
+        .mt .mt-list-head { display: flex; align-items: center; gap: 10px; margin: 34px 0 14px; }
+        .mt .mt-count { font-size: 13px; font-weight: 600; padding: 2px 12px; border-radius: 999px; background: var(--mt-line); color: var(--mt-muted); }
+        .mt .mt-search { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+        .mt .mt-search .box { display: flex; flex: 1 1 320px; max-width: 520px; }
+        .mt .mt-search input[type="text"] {
+            flex: 1; min-width: 0; padding: 12px 18px; font: inherit; color: var(--mt-ink); background: var(--mt-surface);
+            border: 1px solid var(--mt-line); border-right: 0; border-radius: 999px 0 0 999px; outline: none;
+        }
+        .mt .mt-search input[type="text"]:focus { border-color: var(--mt-brand); }
+        .mt .mt-search input::placeholder { color: var(--mt-muted); }
+        .mt .mt-search .go { padding: 12px 22px; border: 0; font-weight: 600; background: var(--mt-brand); color: var(--mt-brand-ink); border-radius: 0 999px 999px 0; }
+        .mt .mt-search .reset { color: var(--mt-brand); font-weight: 600; }
+
+        /* Table (desktop: scrolls sideways inside its card) */
+        .mt .mt-table-wrap { background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; overflow-x: auto; max-width: none !important; }
+        .mt table { width: 100%; min-width: 1180px; border-collapse: collapse; }
+        .mt th { text-align: left; font-size: 13px; font-weight: 600; color: var(--mt-muted); background: var(--mt-bg); padding: 14px 14px; border-bottom: 1px solid var(--mt-line); white-space: nowrap; }
+        .mt td { padding: 14px; border-bottom: 1px solid var(--mt-line); vertical-align: middle; white-space: nowrap; }
+        .mt td.cust-cell { white-space: normal; font-weight: 600; }
+        .mt td.cust-cell small { display: block; font-weight: 400; color: var(--mt-muted); }
+        .mt tbody tr:last-child td { border-bottom: 0; }
+        .mt tbody tr:hover { background: var(--mt-bg); }
+        .mt .row-actions { display: flex; gap: 8px; }
+        .mt .empty { text-align: center; color: var(--mt-muted); padding: 32px 16px; white-space: normal; }
+
+        @media (min-width: 640px) {
+            .mt .mt-fields { grid-template-columns: repeat(3, 1fr); }
+            .mt .mt-card { padding: 28px; }
+        }
+        @media (min-width: 900px) { .mt h1 { font-size: 34px; } }
+
+        /* Phones and tablets: each measurement becomes a compact card */
+        @media (max-width: 899px) {
+            .mt .mt-table-wrap { background: none; border: 0; border-radius: 0; overflow: visible; }
+            .mt table, .mt tbody { display: block; width: 100%; min-width: 0; }
+            .mt thead { display: none; }
+            .mt tr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; background: var(--mt-surface);
+                border: 1px solid var(--mt-line); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+            .mt tbody tr:hover { background: var(--mt-surface); }
+            .mt td { display: block; padding: 0; border: 0; min-width: 0; white-space: normal; word-break: break-word; }
+            .mt td::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 600; color: var(--mt-muted); margin-bottom: 2px; }
+            .mt td.cust-cell { grid-column: 1 / -1; order: -1; font-size: 17px; padding-bottom: 12px; border-bottom: 1px solid var(--mt-line); }
+            .mt td.cust-cell::before { display: none; }
+            .mt td.actions-cell { grid-column: 1 / -1; padding-top: 4px; }
+            .mt td.actions-cell::before { display: none; }
+            .mt .row-actions .mt-btn { flex: 1; }
+            .mt td.empty { grid-column: 1 / -1; text-align: center; }
+            .mt td.empty::before { display: none; }
+            .mt .mt-actions .mt-btn { flex: 1; }
+            .mt .mt-btn.add { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) { .mt * { transition: none !important; } }
+    </style>
+</head>
+<body>
+
+<main class="mt">
+
+<h1>Manage Measurements</h1>
+
+    {% if update_data %}
+    <form method="POST" action="/admin_update_measurement/{{ update_data.measurement_id }}" class="mt-card">
+        {% csrf_token %}
+        <h2>Update Measurement #{{ update_data.measurement_id }}</h2>
+
+        <div class="field">
+            <label for="customerSearchInput">Customer</label>
+            <!-- Search input with datalist -->
+            <input
+                type="text"
+                id="customerSearchInput"
+                list="customerDatalist"
+                placeholder="Type customer name or phone..."
+                value="{{ update_data.customer_id.name }} ({{ update_data.customer_id.phone }})"
+                autocomplete="off"
+                required
+            >
+            <datalist id="customerDatalist">
+                <option value="{{ update_data.customer_id.name }} ({{ update_data.customer_id.phone }})" data-id="{{ update_data.customer_id.Customer_id }}"></option>
+            </datalist>
+
+            <!-- Hidden field holding actual customer_id -->
+            <input type="hidden" name="customer_id" id="selectedCustomerId" value="{{ update_data.customer_id.Customer_id }}" required>
+        </div>
+
+            <div class="mt-section">
+                <h3>Body</h3>
+                <div class="mt-fields">
+                    <div class="field">
+                        <label for="f_length">Length</label>
+                        <input type="text" id="f_length" name="length" value="{{ update_data.length|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_wide">Wide</label>
+                        <input type="text" id="f_wide" name="wide" value="{{ update_data.wide|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_shoulder_back">Shoulder Back</label>
+                        <input type="text" id="f_shoulder_back" name="shoulder_back" value="{{ update_data.shoulder_back|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_shoulder_front">Shoulder Front</label>
+                        <input type="text" id="f_shoulder_front" name="shoulder_front" value="{{ update_data.shoulder_front|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_wide_back">Wide Back</label>
+                        <input type="text" id="f_wide_back" name="wide_back" value="{{ update_data.wide_back|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_wide_front">Wide Front</label>
+                        <input type="text" id="f_wide_front" name="wide_front" value="{{ update_data.wide_front|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_c">C</label>
+                        <input type="text" id="f_c" name="c" value="{{ update_data.c|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_b">B</label>
+                        <input type="text" id="f_b" name="b" value="{{ update_data.b|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_s">S</label>
+                        <input type="text" id="f_s" name="s" value="{{ update_data.s|default:'' }}">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-section">
+                <h3>Tuck and T</h3>
+                <div class="mt-fields">
+                    <div class="field">
+                        <label for="f_tuck_to_tuck">Tuck to Tuck</label>
+                        <input type="text" id="f_tuck_to_tuck" name="tuck_to_tuck" value="{{ update_data.tuck_to_tuck|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_tuck_length">Tuck Length</label>
+                        <input type="text" id="f_tuck_length" name="tuck_length" value="{{ update_data.tuck_length|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_t_wide">T Wide</label>
+                        <input type="text" id="f_t_wide" name="t_wide" value="{{ update_data.t_wide|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_t_point">T Point</label>
+                        <input type="text" id="f_t_point" name="t_point" value="{{ update_data.t_point|default:'' }}">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-section">
+                <h3>Neck</h3>
+                <div class="mt-fields">
+                    <div class="field">
+                        <label for="f_neckdepth_front">Neck Depth (Front)</label>
+                        <input type="text" id="f_neckdepth_front" name="neckdepth_front" value="{{ update_data.neckdepth_front|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_neckdepth_back">Neck Depth (Back)</label>
+                        <input type="text" id="f_neckdepth_back" name="neckdepth_back" value="{{ update_data.neckdepth_back|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_neckshape_front">Neck Shape (Front)</label>
+                        <input type="text" id="f_neckshape_front" name="neckshape_front" value="{{ update_data.neckshape_front|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_neckshape_back">Neck Shape (Back)</label>
+                        <input type="text" id="f_neckshape_back" name="neckshape_back" value="{{ update_data.neckshape_back|default:'' }}">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-section">
+                <h3>Sleeve and style</h3>
+                <div class="mt-fields">
+                    <div class="field">
+                        <label for="f_regal">Regal</label>
+                        <input type="text" id="f_regal" name="regal" value="{{ update_data.regal|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_muscle">Muscle</label>
+                        <input type="text" id="f_muscle" name="muscle" value="{{ update_data.muscle|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_sleeve">Sleeve</label>
+                        <input type="text" id="f_sleeve" name="sleeve" value="{{ update_data.sleeve|default:'' }}">
+                    </div>
+                    <div class="field">
+                        <label for="f_puff">Puff</label>
+                        <input type="text" id="f_puff" name="puff" value="{{ update_data.puff|default:'' }}">
+                    </div>
+                </div>
+            </div>
+
+        <div class="mt-section">
+            <div class="field">
+                <label for="f_description">Description</label>
+                <textarea id="f_description" name="description" rows="3">{{ update_data.description|default:'' }}</textarea>
+            </div>
+        </div>
+
+        <div class="mt-actions">
+            <a href="/admin_manage_measurement" class="mt-btn ghost">Cancel</a>
+            <button type="submit" class="mt-btn">Update Measurement</button>
+        </div>
+    </form>
+
+    {% else %}
+    <!-- ======= ADD NEW BUTTON ======= -->
+    <div class="mt-toolbar">
+        <button type="button" class="mt-btn green add" onclick="toggleAddForm()">+ Add New Measurement</button>
+    </div>
+
+    <!-- ======= ADD FORM (Hidden by default) ======= -->
+    <div id="addFormContainer" style="display: none; margin-bottom: 8px;">
+    <form method="POST" action="/admin_manage_measurement" class="mt-card">
+        {% csrf_token %}
+        <h2>Add Measurement</h2>
+
+        <div class="field">
+            <label for="customerSearchInput">Customer</label>
+            <!-- Search input with datalist -->
+            <input
+                type="text"
+                id="customerSearchInput"
+                list="customerDatalist"
+                placeholder="Type customer name or phone..."
+                autocomplete="off"
+                required
+            >
+            <datalist id="customerDatalist"></datalist>
+
+            <!-- Hidden field holding actual customer_id -->
+            <input type="hidden" name="customer_id" id="selectedCustomerId" required>
+        </div>
+
+            <div class="mt-section">
+                <h3>Body</h3>
+                <div class="mt-fields">
+                    <div class="field">
+                        <label for="f_length">Length</label>
+                        <input type="text" id="f_length" name="length">
+                    </div>
+                    <div class="field">
+                        <label for="f_wide">Wide</label>
+                        <input type="text" id="f_wide" name="wide">
+                    </div>
+                    <div class="field">
+                        <label for="f_shoulder_back">Shoulder Back</label>
+                        <input type="text" id="f_shoulder_back" name="shoulder_back">
+                    </div>
+                    <div class="field">
+                        <label for="f_shoulder_front">Shoulder Front</label>
+                        <input type="text" id="f_shoulder_front" name="shoulder_front">
+                    </div>
+                    <div class="field">
+                        <label for="f_wide_back">Wide Back</label>
+                        <input type="text" id="f_wide_back" name="wide_back">
+                    </div>
+                    <div class="field">
+                        <label for="f_wide_front">Wide Front</label>
+                        <input type="text" id="f_wide_front" name="wide_front">
+                    </div>
+                    <div class="field">
+                        <label for="f_c">C</label>
+                        <input type="text" id="f_c" name="c">
+                    </div>
+                    <div class="field">
+                        <label for="f_b">B</label>
+                        <input type="text" id="f_b" name="b">
+                    </div>
+                    <div class="field">
+                        <label for="f_s">S</label>
+                        <input type="text" id="f_s" name="s">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-section">
+                <h3>Tuck and T</h3>
+                <div class="mt-fields">
+                    <div class="field">
+                        <label for="f_tuck_to_tuck">Tuck to Tuck</label>
+                        <input type="text" id="f_tuck_to_tuck" name="tuck_to_tuck">
+                    </div>
+                    <div class="field">
+                        <label for="f_tuck_length">Tuck Length</label>
+                        <input type="text" id="f_tuck_length" name="tuck_length">
+                    </div>
+                    <div class="field">
+                        <label for="f_t_wide">T Wide</label>
+                        <input type="text" id="f_t_wide" name="t_wide">
+                    </div>
+                    <div class="field">
+                        <label for="f_t_point">T Point</label>
+                        <input type="text" id="f_t_point" name="t_point">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-section">
+                <h3>Neck</h3>
+                <div class="mt-fields">
+                    <div class="field">
+                        <label for="f_neckdepth_front">Neck Depth (Front)</label>
+                        <input type="text" id="f_neckdepth_front" name="neckdepth_front">
+                    </div>
+                    <div class="field">
+                        <label for="f_neckdepth_back">Neck Depth (Back)</label>
+                        <input type="text" id="f_neckdepth_back" name="neckdepth_back">
+                    </div>
+                    <div class="field">
+                        <label for="f_neckshape_front">Neck Shape (Front)</label>
+                        <input type="text" id="f_neckshape_front" name="neckshape_front">
+                    </div>
+                    <div class="field">
+                        <label for="f_neckshape_back">Neck Shape (Back)</label>
+                        <input type="text" id="f_neckshape_back" name="neckshape_back">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-section">
+                <h3>Sleeve and style</h3>
+                <div class="mt-fields">
+                    <div class="field">
+                        <label for="f_regal">Regal</label>
+                        <input type="text" id="f_regal" name="regal">
+                    </div>
+                    <div class="field">
+                        <label for="f_muscle">Muscle</label>
+                        <input type="text" id="f_muscle" name="muscle">
+                    </div>
+                    <div class="field">
+                        <label for="f_sleeve">Sleeve</label>
+                        <input type="text" id="f_sleeve" name="sleeve">
+                    </div>
+                    <div class="field">
+                        <label for="f_puff">Puff</label>
+                        <input type="text" id="f_puff" name="puff">
+                    </div>
+                </div>
+            </div>
+
+        <div class="mt-section">
+            <div class="field">
+                <label for="f_description">Description</label>
+                <textarea id="f_description" name="description" rows="3" placeholder="Notes, special instructions..."></textarea>
+            </div>
+        </div>
+
+        <div class="mt-actions">
+            <button type="button" class="mt-btn ghost" onclick="toggleAddForm()">Cancel</button>
+            <button type="submit" class="mt-btn">Save Measurement</button>
+        </div>
+    </form>
+    </div>
+
+    <div class="mt-list-head">
+        <h2>Measurement List</h2>
+        <span class="mt-count">{{ measurements|length }}</span>
+    </div>
+
+    <form method="GET" action="/admin_manage_measurement" class="mt-search">
+        <div class="box">
+            <input type="text" name="search" placeholder="Search by customer name, phone, description" value="{{ search_query }}">
+            <input type="submit" value="Search" class="go">
+        </div>
+        {% if search_query %}
+            <a href="/admin_manage_measurement" class="reset">Reset</a>
+        {% endif %}
+    </form>
+
+    <div class="mt-table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Length</th>
+                    <th>Wide</th>
+                    <th>Shoulder (B/F)</th>
+                    <th>Wide (B/F)</th>
+                    <th>C / B / S</th>
+                    <th>Tuck (T-T / Len)</th>
+                    <th>T Wide / Point</th>
+                    <th>Neck Depth (F/B)</th>
+                    <th>Neck Shape (F/B)</th>
+                    <th>Regal / Muscle</th>
+                    <th>Sleeve / Puff</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in measurements %}
+                <tr>
+                    <td data-label="ID">{{ m.measurement_id }}</td>
+                    <td class="cust-cell" data-label="Customer">{{ m.customer_id.name }}<small>{{ m.customer_id.phone }}</small></td>
+                    <td data-label="Length">{{ m.length|default:"-" }}</td>
+                    <td data-label="Wide">{{ m.wide|default:"-" }}</td>
+                    <td data-label="Shoulder (B/F)">{{ m.shoulder_back|default:"-" }} / {{ m.shoulder_front|default:"-" }}</td>
+                    <td data-label="Wide (B/F)">{{ m.wide_back|default:"-" }} / {{ m.wide_front|default:"-" }}</td>
+                    <td data-label="C / B / S">{{ m.c|default:"-" }} / {{ m.b|default:"-" }} / {{ m.s|default:"-" }}</td>
+                    <td data-label="Tuck (T-T / Len)">{{ m.tuck_to_tuck|default:"-" }} / {{ m.tuck_length|default:"-" }}</td>
+                    <td data-label="T Wide / Point">{{ m.t_wide|default:"-" }} / {{ m.t_point|default:"-" }}</td>
+                    <td data-label="Neck Depth (F/B)">{{ m.neckdepth_front|default:"-" }} / {{ m.neckdepth_back|default:"-" }}</td>
+                    <td data-label="Neck Shape (F/B)">{{ m.neckshape_front|default:"-" }} / {{ m.neckshape_back|default:"-" }}</td>
+                    <td data-label="Regal / Muscle">{{ m.regal|default:"-" }} / {{ m.muscle|default:"-" }}</td>
+                    <td data-label="Sleeve / Puff">{{ m.sleeve|default:"-" }} / {{ m.puff|default:"-" }}</td>
+                    <td data-label="Date">{{ m.date }}</td>
+                    <td class="actions-cell">
+                        <div class="row-actions">
+                            <a href="/admin_update_measurement/{{ m.measurement_id }}" class="mt-btn sm ghost">Edit</a>
+                            <a href="/admin_delete_measurement/{{ m.measurement_id }}" class="mt-btn sm danger" onclick="return confirm('Are you sure you want to delete this measurement?');">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="15" class="empty">No measurements found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- JavaScript to handle the button click -->
+    <script>
+        function toggleAddForm() {
+            var form = document.getElementById("addFormContainer");
+            if (form.style.display === "none") {
+                form.style.display = "block";
+                form.scrollIntoView({ behavior: "smooth", block: "start" });
+                document.getElementById("customerSearchInput").focus({ preventScroll: true });
+            } else {
+                form.style.display = "none";
+            }
+        }
+    </script>
+    {% endif %}
+
+    <script>
+    const searchInput = document.getElementById('customerSearchInput');
+    const datalist = document.getElementById('customerDatalist');
+    const hiddenIdInput = document.getElementById('selectedCustomerId');
+
+    function checkForSelectedCustomer() {
+        const val = searchInput.value.trim();
+        const options = datalist.querySelectorAll('option');
+        let matchedId = null;
+
+        options.forEach(opt => {
+            if (opt.value === val) {
+                matchedId = opt.getAttribute('data-id');
+            }
+        });
+
+        if (matchedId) {
+            hiddenIdInput.value = matchedId;
+            return true;
+        }
+        return false;
+    }
+
+    searchInput.addEventListener('input', function () {
+        if (checkForSelectedCustomer()) {
+            return;
+        }
+
+        hiddenIdInput.value = '';
+        const query = this.value.trim();
+
+        if (query.length > 0) {
+            fetch(`/customer_search_suggestions/?term=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    datalist.innerHTML = '';
+                    data.forEach(cust => {
+                        const opt = document.createElement('option');
+                        opt.value = cust.label;
+                        opt.setAttribute('data-id', cust.id);
+                        datalist.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error(err));
+        }
+    });
+
+    searchInput.addEventListener('change', function () {
+        checkForSelectedCustomer();
+    });
+    </script>
+
+</main>
+
+{% include 'admin_footer.html' %}
+
+</body>
+</html>

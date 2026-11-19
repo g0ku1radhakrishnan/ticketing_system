@@ -1,0 +1,27 @@
+{% load static %}
+
+<!-- Bottom navigation (phones) -->
+    <nav class="bottom-nav" aria-label="Quick navigation">
+        <!-- Change "/" to the URL of your tailor home page -->
+        <a href="/cutter_tailorapp/tailor_home/"><i class="fa-solid fa-house"></i>Home</a>
+        <a href="/cutter_tailorapp/tailor_available_jobs/"><i class="fa-solid fa-clipboard-list"></i>Available</a>
+        <a href="/cutter_tailorapp/tailor_my_jobs/"><i class="fa-solid fa-list-check"></i>My Jobs</a>
+        <button type="button" id="moreBtn" aria-controls="sidebar"><i class="fa-solid fa-ellipsis"></i>More</button>
+    </nav>
+
+    <script>
+        (function () {
+            var body = document.body;
+            function setMenu(open) {
+                body.classList.toggle('menu-open', open);
+                document.getElementById('openMenu').setAttribute('aria-expanded', open);
+            }
+            document.getElementById('openMenu').addEventListener('click', function () { setMenu(true); });
+            document.getElementById('moreBtn').addEventListener('click', function () { setMenu(true); });
+            document.getElementById('closeMenu').addEventListener('click', function () { setMenu(false); });
+            document.getElementById('overlay').addEventListener('click', function () { setMenu(false); });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setMenu(false); });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+{% include 'cutter_header.html' with page_title='Available Jobs' %}
+
+<style>
+    .jt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+    .jt-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .jt-count { font-size: 13px; font-weight: 600; padding: 2px 12px; border-radius: 999px; background: var(--line); color: var(--muted); }
+
+    .jt-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: 999px;
+        border: 1px solid var(--brand); background: var(--brand); color: var(--brand-ink); font-weight: 600; font-size: 15px; transition: filter .15s, background .15s; }
+    .jt-btn:hover { filter: brightness(1.12); }
+    .jt-btn.ghost { background: transparent; color: var(--brand); }
+    .jt-btn.ghost:hover { background: var(--line); filter: none; }
+    .jt-btn.sm { padding: 8px 18px; font-size: 14px; }
+
+    .jt-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow-x: auto; }
+    .jt-table { width: 100%; min-width: 900px; border-collapse: collapse; }
+    .jt-table th { text-align: left; font-size: 13px; font-weight: 600; color: var(--muted); background: var(--bg); padding: 14px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .jt-table td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    .jt-table tbody tr:last-child td { border-bottom: 0; }
+    .jt-table tbody tr:hover { background: var(--bg); }
+    .jt-table td.tk b { color: var(--brand); }
+    .jt-table .empty { text-align: center; color: var(--muted); padding: 36px 16px; }
+
+    .pill { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; background: var(--line); color: var(--ink); text-transform: capitalize; }
+    .pill.s-high { background: var(--c-pending); color: var(--c-pending-ink); }
+    .pill.s-urgent { background: var(--c-urgent); color: var(--c-urgent-ink); }
+    .pill.none { font-weight: 600; color: var(--muted); background: transparent; border: 1px dashed var(--muted); text-transform: none; }
+
+    @media (min-width: 900px) { .jt-table { min-width: 0; } }
+
+    /* Phones and tablets: each job becomes a card */
+    @media (max-width: 899px) {
+        .jt-head .jt-btn { flex: 1 1 100%; }
+        .jt-wrap { background: none; border: 0; border-radius: 0; overflow: visible; }
+        .jt-table, .jt-table tbody { display: block; width: 100%; min-width: 0; }
+        .jt-table thead { display: none; }
+        .jt-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; background: var(--surface);
+            border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+        .jt-table tbody tr:hover { background: var(--surface); }
+        .jt-table td { display: block; padding: 0; border: 0; min-width: 0; word-break: break-word; }
+        .jt-table td::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
+        .jt-table td.tk { grid-column: 1 / -1; font-size: 18px; }
+        .jt-table td.cust { grid-column: 1 / -1; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+        .jt-table td.tk::before, .jt-table td.cust::before { display: none; }
+        .jt-table td.act { grid-column: 1 / -1; padding-top: 4px; }
+        .jt-table td.act::before { display: none; }
+        .jt-table td.act .jt-btn { width: 100%; }
+        .jt-table td.empty { grid-column: 1 / -1; text-align: center; }
+        .jt-table td.empty::before { display: none; }
+        .jt-table tr:has(td.empty) { display: block; padding: 0; }
+    }
+</style>
+
+<main>
+    <div class="jt-head">
+        <div class="jt-title">
+            <h1>Available Jobs Pool</h1>
+            <span class="jt-count">{{ available_tickets|length }}</span>
+        </div>
+        <a href="/cutter_tailorapp/cutter_home/" class="jt-btn ghost">← Back to Dashboard</a>
+    </div>
+
+    <div class="jt-wrap">
+        <table class="jt-table">
+            <thead>
+                <tr>
+                    <th>Ticket No</th>
+                    <th>Customer Name</th>
+                    <th>Garment</th>
+                    <th>Qty</th>
+                    <th>Priority</th>
+                    <th>Delivery Date</th>
+                    <th>Measurement ID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in available_tickets %}
+                <tr>
+                    <td class="tk" data-label="Ticket No"><b>{{ ticket.ticket_number|default:ticket.ticket_id }}</b></td>
+                    <td class="cust" data-label="Customer Name">{{ ticket.customer_id.name }}</td>
+                    <td data-label="Garment">{{ ticket.garment_type }}</td>
+                    <td data-label="Qty">{{ ticket.quantity }}</td>
+                    <td data-label="Priority"><span class="pill s-{{ ticket.priority|slugify }}">{{ ticket.priority }}</span></td>
+                    <td data-label="Delivery Date">{{ ticket.expected_delivery_date }}</td>
+                    <td data-label="Measurement ID">
+                        {% if ticket.measurement_id %}
+                            #{{ ticket.measurement_id.measurement_id }}
+                        {% else %}
+                            <span class="pill none">Not Attached</span>
+                        {% endif %}
+                    </td>
+                    <td class="act"><a href="/cutter_tailorapp/claim_ticket/{{ ticket.ticket_id }}" class="jt-btn sm">Claim Job</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty">No available jobs at the moment.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</main>
+
+{% include 'cutter_footer.html' %}

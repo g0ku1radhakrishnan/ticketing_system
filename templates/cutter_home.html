@@ -1,0 +1,87 @@
+{% include 'cutter_header.html' with page_title='Cutter Dashboard' %}
+
+<style>
+    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px;
+        background: var(--c-total); color: var(--c-total-ink); font-size: 13px; font-weight: 600; }
+    h2.section { font-size: 17px; font-weight: 700; margin: 26px 0 14px; }
+
+    /* Summary cards: add more <a><div class="stat-card ..."> and they flow into the grid */
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .stats > a { display: block; }
+    .stats > a:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .stat-card { height: 100%; padding: 18px 16px; border-radius: 18px; background: var(--bg-c); color: var(--ink-c); transition: transform .15s; }
+    .stats a:hover .stat-card { transform: translateY(-3px); }
+    .stat-card .number { font-size: 34px; line-height: 1; font-weight: 700; }
+    .stat-card h3 { margin: 8px 0 0; font-size: 14px; font-weight: 500; }
+    .t-new    { --bg-c: var(--c-pending); --ink-c: var(--c-pending-ink); }
+    .t-active { --bg-c: var(--c-total);   --ink-c: var(--c-total-ink); }
+    .t-done   { --bg-c: var(--c-done);    --ink-c: var(--c-done-ink); }
+
+    /* Menu tiles: add more <a class="tile"> and they flow into the grid */
+    .tiles { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .tile { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border-radius: 18px; background: var(--surface);
+        border: 1px solid var(--line); font-weight: 600; transition: background .15s, color .15s, border-color .15s, transform .15s; }
+    .tile .ic { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 19px; background: var(--bg); color: var(--brand); }
+    .tile .txt { flex: 1; }
+    .tile .go { color: var(--muted); }
+    .tile:hover { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); transform: translateY(-2px); }
+    .tile:hover .ic { background: rgba(255,255,255,.16); color: inherit; }
+    .tile:hover .go { color: inherit; }
+
+    @media (min-width: 640px) {
+        .stats { grid-template-columns: repeat(3, 1fr); }
+        .stats > a:last-child:nth-child(odd) { grid-column: auto; }
+        .tiles { grid-template-columns: 1fr 1fr; }
+    }
+    @media (min-width: 900px) { .stat-card .number { font-size: 44px; } }
+</style>
+
+<main>
+    <h1>Welcome, {{ cutter.name }}</h1>
+    <p class="sub"><span class="chip"><i class="fa-solid fa-scissors"></i> Cutter Panel</span></p>
+
+    <h2 class="section">Dashboard Summary</h2>
+    <div class="stats">
+        <a href="/cutter_tailorapp/cutter_available_jobs">
+            <div class="stat-card t-new">
+                <div class="number">{{ available_count }}</div>
+                <h3>New Available Jobs</h3>
+            </div>
+        </a>
+        <a href="/cutter_tailorapp/cutter_my_jobs/">
+            <div class="stat-card t-active">
+                <div class="number">{{ my_jobs_count }}</div>
+                <h3>Your Active Jobs</h3>
+            </div>
+        </a>
+        <a href="/cutter_tailorapp/cutter_completed_jobs/">
+            <div class="stat-card t-done">
+                <div class="number">{{ completed_jobs_count }}</div>
+                <h3>Completed Jobs</h3>
+            </div>
+        </a>
+    </div>
+    
+
+    <h2 class="section">Menu</h2>
+    <!-- Links to the new separate pages -->
+    <div class="tiles">
+        <a href="/cutter_tailorapp/cutter_available_jobs" class="tile">
+            <span class="ic"><i class="fa-solid fa-boxes-stacked"></i></span>
+            <span class="txt">View Available Jobs Pool</span>
+            <i class="fa-solid fa-arrow-right go"></i>
+        </a>
+        <a href="/cutter_tailorapp/cutter_my_jobs/" class="tile">
+            <span class="ic"><i class="fa-solid fa-list-check"></i></span>
+            <span class="txt">View My Claimed Jobs</span>
+            <i class="fa-solid fa-arrow-right go"></i>
+        </a>
+        <a href="/cutter_tailorapp/cutter_completed_jobs/" class="tile">
+            <span class="ic"><i class="fa-solid fa-circle-check"></i></span>
+            <span class="txt">View Completed Jobs</span>
+            <i class="fa-solid fa-arrow-right go"></i>
+        </a>
+    </div>
+</main>
+
+{% include 'cutter_footer.html' %}

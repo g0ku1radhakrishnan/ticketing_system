@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Suee & Suthr</title>
+    <!-- FontAwesome for the user and lock icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for the theme's clean typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f7f5f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-wrapper {
+            background: #ffffff;
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .brand-title {
+            font-size: 26px;
+            font-weight: 500;
+            color: #2c2c2c;
+            margin-bottom: 4px;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 35px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .welcome-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #222;
+            margin-bottom: 6px;
+            text-align: left;
+        }
+
+        .sub-text {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        /* Styling based on your specific floating-label HTML structure */
+        .input-field {
+            position: relative;
+            margin-bottom: 22px;
+            text-align: left;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            background-color: #fcfcfc;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-field input:focus {
+            border-color: #6d4c5c;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(109, 76, 92, 0.1);
+        }
+
+        /* Floating Label Logic */
+        .input-field label {
+            position: absolute;
+            left: 45px;
+            top: 15px;
+            color: #999;
+            font-size: 14px;
+            transition: 0.2s ease all;
+            pointer-events: none;
+        }
+
+        .input-field input:focus ~ label, 
+        .input-field input:not(:placeholder-shown) ~ label {
+            top: -10px;
+            left: 12px;
+            font-size: 12px;
+            background-color: #ffffff;
+            padding: 0 5px;
+            color: #6d4c5c;
+            font-weight: 500;
+        }
+
+        /* FontAwesome Icon Styling */
+        .input-field .icon {
+            position: absolute;
+            left: 16px;
+            top: 15px;
+            color: #aaa;
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+
+        .input-field input:focus ~ .icon {
+            color: #6d4c5c;
+        }
+
+        /* Button styled to match the theme */
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #6d4c5c;
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background-color: #5a3e4c;
+        }
+
+        .forgot-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #6d4c5c;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Responsive adjustments */
+        @media (max-width: 480px) {
+            .login-wrapper {
+                padding: 30px 20px;
+                box-shadow: none;
+                background: transparent;
+            }
+            body {
+                background-color: #ffffff;
+            }
+            .input-field input:focus ~ label, 
+            .input-field input:not(:placeholder-shown) ~ label {
+                background-color: #ffffff; /* Matches mobile bg */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <!-- Theme Branding -->
+        <h1 class="brand-title">Suee & Suthr</h1>
+        <p class="brand-subtitle">Thread Flow Management</p>
+
+        <h2 class="welcome-text">Welcome Back</h2>
+        <p class="sub-text">Sign in to your account</p>
+
+        <!-- Your exact form structure integrated with the theme CSS -->
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Username Field -->
+            <div class="input-field">
+                <input type="text" required autocomplete="off" id="username" name="uname" placeholder=" ">
+                <label for="username">Username</label>
+                <i class="fas fa-user icon"></i>
+            </div>
+
+            <!-- Password Field -->
+            <div class="input-field">
+                <input type="password" required autocomplete="off" id="password" name="pswd" placeholder=" ">
+                <label for="password">Password</label>
+                <i class="fas fa-lock icon"></i>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="login-btn">
+                <span>Sign In</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+            
+            <a href="#" class="forgot-link">Forgot Password?</a>
+        </form>
+    </div>
+
+</body>
+</html>

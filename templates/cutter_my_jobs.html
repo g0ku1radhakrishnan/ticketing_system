@@ -1,0 +1,213 @@
+{% include 'cutter_header.html' %}
+
+<style>
+    /* Chip styling */
+    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px;
+        background: var(--c-total); color: var(--c-total-ink); font-size: 13px; font-weight: 600; }
+    
+    /* Table wrapper - Desktop Default */
+    .table-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; margin-top: 24px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .table-responsive { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    th { padding: 16px 18px; background: var(--bg); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--line); font-weight: 700; }
+    td { padding: 16px 18px; border-bottom: 1px solid var(--line); font-size: 15px; vertical-align: top; transition: background 0.15s; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--bg); }
+    
+    .ticket-id { font-weight: 700; color: var(--ink); }
+    .qty { color: var(--muted); font-size: 13px; font-weight: 500; }
+
+    /* Image Gallery Thumbnails */
+    .img-gallery { display: flex; flex-wrap: wrap; gap: 6px; max-width: 140px; }
+    .img-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); transition: transform 0.15s, box-shadow 0.15s; }
+    .img-thumb:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .no-images { font-size: 13px; color: var(--muted); font-style: italic; }
+
+    /* Status Dropdown Styling (INCREASED SIZE) */
+    .status-select { 
+        padding: 12px 16px; /* Increased padding */
+        border: 2px solid var(--line); 
+        border-radius: 12px; 
+        background: var(--surface); 
+        font-family: inherit; 
+        font-size: 15px; /* Increased font size */
+        font-weight: 700; /* Bolder text */
+        color: var(--ink); 
+        cursor: pointer; 
+        transition: border-color 0.15s, box-shadow 0.15s; 
+        width: 100%; 
+        max-width: 180px; /* Increased max-width */
+    }
+    .status-select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(91, 33, 69, 0.1); }
+
+    /* Expandable Measurements (Details/Summary) */
+    details.specs-details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; width: 100%; min-width: 200px; }
+    details.specs-details summary { cursor: pointer; padding: 12px 14px; font-weight: 600; font-size: 14px; color: var(--brand); list-style: none; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s; }
+    details.specs-details summary:hover { background: var(--bg); }
+    details.specs-details summary::-webkit-details-marker { display: none; }
+    details.specs-details summary::after { content: '\f078'; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 11px; transition: transform 0.2s ease; }
+    details.specs-details[open] summary::after { transform: rotate(180deg); }
+    
+    .measure-list { margin: 0; padding: 12px 14px; list-style: none; border-top: 1px solid var(--line); background: var(--bg); display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+    .measure-list li { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px dashed var(--line); padding-bottom: 4px; }
+    .measure-list li:last-child { border-bottom: none; padding-bottom: 0; }
+    .measure-list b { color: var(--muted); font-weight: 600; }
+    .notes-alert { color: var(--c-urgent-ink); background: var(--c-urgent); padding: 6px 10px; border-radius: 6px; font-weight: 500; display: block !important; margin-top: 4px; }
+    .notes-alert b { color: inherit; }
+    
+    .no-specs { font-size: 13px; color: var(--muted); font-style: italic; }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 56px 20px; }
+    .empty-state i { font-size: 42px; color: var(--line); margin-bottom: 16px; }
+    .empty-state p { color: var(--muted); margin: 0; font-size: 16px; font-weight: 500; }
+
+    /* ========================================= */
+    /* MOBILE CARD VIEW FOR TABLES               */
+    /* ========================================= */
+    @media (max-width: 768px) {
+        .table-responsive { overflow-x: visible; }
+        .table-card { border: none; background: transparent; box-shadow: none; margin-top: 16px; }
+        
+        /* Force table elements to display as blocks */
+        table, thead, tbody, th, td, tr { display: block; white-space: normal; }
+        
+        /* Hide column headers */
+        thead { display: none; }
+        
+        /* Style rows as individual cards */
+        tbody tr {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            overflow: hidden;
+            transition: transform 0.15s;
+        }
+        
+        /* Style cells as rows within the card */
+        tbody td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        
+        /* Add labels using data-label attribute */
+        tbody td::before {
+            content: attr(data-label);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            font-weight: 700;
+            display: block;
+        }
+        
+        /* Make status select full width on mobile */
+        .status-select { max-width: 100%; }
+        
+        /* Remove empty state extra borders on mobile */
+        tr.empty-row td { display: block; border-bottom: none; }
+        tr.empty-row td::before { display: none; }
+    }
+</style>
+
+<main>
+    <h1>My Claimed Jobs</h1>
+    <p class="sub"><span class="chip"><i class="fa-solid fa-list-check"></i> Your Active Cutting Queue</span></p>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticket No</th>
+                        <th>Customer Name</th>
+                        <th>Garment & Qty</th>
+                        <th>Delivery Date</th>
+                        <th>Images</th>
+                        <th>Status</th>
+                        <th>Full Measurements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in my_tickets %}
+                    <tr>
+                        <td data-label="Ticket No"><span class="ticket-id">{{ ticket.ticket_number|default:ticket.ticket_id }}</span></td>
+                        <td data-label="Customer Name">{{ ticket.customer_id.name }}</td>
+                        <td data-label="Garment & Qty">
+                            {{ ticket.garment_type }} 
+                            <br><span class="qty">(x{{ ticket.quantity }})</span>
+                        </td>
+                        <td data-label="Delivery Date">{{ ticket.expected_delivery_date }}</td>
+                        <td data-label="Images">
+                            {% if ticket.images.all %}
+                                <div class="img-gallery">
+                                {% for img in ticket.images.all %}
+                                    <a href="/static/image/{{ img.image.name }}" target="_blank">
+                                        <img src="/static/image/{{ img.image.name }}" class="img-thumb" alt="Reference Image">
+                                    </a>
+                                {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="no-images">No images</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Status">
+                            <form method="POST" action="/cutter_tailorapp/update_cutting_status/{{ ticket.ticket_id }}">
+                                {% csrf_token %}
+                                <select name="cutting_status" class="status-select" onchange="this.form.submit()">
+                                    <option value="pending" {% if ticket.cutting_status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="in_progress" {% if ticket.cutting_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="completed" {% if ticket.cutting_status == 'completed' %}selected{% endif %}>Completed</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td data-label="Full Measurements">
+                            {% if ticket.measurement_id %}
+                                <details class="specs-details">
+                                    <summary>Show Measurements</summary>
+                                    <ul class="measure-list">
+                                        <li><b>Length:</b> <span>{{ ticket.measurement_id.length|default:"-" }}</span></li>
+                                        <li><b>Wide:</b> <span>{{ ticket.measurement_id.wide|default:"-" }}</span></li>
+                                        <li><b>Shoulder (Back/Front):</b> <span>{{ ticket.measurement_id.shoulder_back|default:"-" }} / {{ ticket.measurement_id.shoulder_front|default:"-" }}</span></li>
+                                        <li><b>Wide (Back/Front):</b> <span>{{ ticket.measurement_id.wide_back|default:"-" }} / {{ ticket.measurement_id.wide_front|default:"-" }}</span></li>
+                                        <li><b>C / B / S:</b> <span>{{ ticket.measurement_id.c|default:"-" }} / {{ ticket.measurement_id.b|default:"-" }} / {{ ticket.measurement_id.s|default:"-" }}</span></li>
+                                        <li><b>Tuck (T-T / Length):</b> <span>{{ ticket.measurement_id.tuck_to_tuck|default:"-" }} / {{ ticket.measurement_id.tuck_length|default:"-" }}</span></li>
+                                        <li><b>T Wide / Point:</b> <span>{{ ticket.measurement_id.t_wide|default:"-" }} / {{ ticket.measurement_id.t_point|default:"-" }}</span></li>
+                                        <li><b>Neck Depth (Front/Back):</b> <span>{{ ticket.measurement_id.neckdepth_front|default:"-" }} / {{ ticket.measurement_id.neckdepth_back|default:"-" }}</span></li>
+                                        <li><b>Neck Shape (Front/Back):</b> <span>{{ ticket.measurement_id.neckshape_front|default:"-" }} / {{ ticket.measurement_id.neckshape_back|default:"-" }}</span></li>
+                                        <li><b>Regal / Muscle:</b> <span>{{ ticket.measurement_id.regal|default:"-" }} / {{ ticket.measurement_id.muscle|default:"-" }}</span></li>
+                                        <li><b>Sleeve / Puff:</b> <span>{{ ticket.measurement_id.sleeve|default:"-" }} / {{ ticket.measurement_id.puff|default:"-" }}</span></li>
+                                        
+                                        {% if ticket.measurement_id.description %}
+                                            <li class="notes-alert"><b>Notes:</b> <span>{{ ticket.measurement_id.description }}</span></li>
+                                        {% endif %}
+                                    </ul>
+                                </details>
+                            {% else %}
+                                <span class="no-specs">No measurements attached</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-box-open"></i>
+                                <p>You have not claimed any jobs yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+{% include 'cutter_footer.html' %}

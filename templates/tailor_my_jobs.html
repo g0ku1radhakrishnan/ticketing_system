@@ -1,0 +1,145 @@
+{% include 'tailor_header.html' with page_title='My Claimed Jobs' %}
+
+<style>
+    /* Chip styling */
+    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px;
+        background: var(--c-total); color: var(--c-total-ink); font-size: 13px; font-weight: 600; }
+
+    /* Table wrapper */
+    .table-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; margin-top: 24px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+
+    /* Desktop table */
+    .table-responsive { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+    .table-card table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    .table-card th { padding: 16px 18px; background: var(--bg); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--line); font-weight: 700; }
+    .table-card td { padding: 16px 18px; border-bottom: 1px solid var(--line); font-size: 15px; vertical-align: top; transition: background 0.15s; }
+    .table-card tr:last-child td { border-bottom: none; }
+    .table-card tbody tr:hover td { background: var(--bg); }
+
+    .ticket-id { font-weight: 700; color: var(--ink); }
+    .qty { color: var(--muted); font-size: 13px; font-weight: 500; }
+
+    /* Status Dropdown Styling */
+    .status-select { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-family: inherit; font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; max-width: 140px; }
+    .status-select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 2px rgba(91, 33, 69, 0.1); }
+
+    /* Expandable Measurements (Details/Summary) */
+    details.specs-details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; width: 100%; min-width: 180px; }
+    details.specs-details summary { cursor: pointer; padding: 10px 14px; font-weight: 600; font-size: 13px; color: var(--brand); list-style: none; display: flex; align-items: center; justify-content: space-between; transition: background 0.15s; }
+    details.specs-details summary:hover { background: var(--bg); }
+    details.specs-details summary::-webkit-details-marker { display: none; }
+    details.specs-details summary::after { content: '\f078'; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 11px; transition: transform 0.2s ease; }
+    details.specs-details[open] summary::after { transform: rotate(180deg); }
+
+    .measure-list { margin: 0; padding: 12px 14px; list-style: none; border-top: 1px solid var(--line); background: var(--bg); display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+    .measure-list li { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px dashed var(--line); padding-bottom: 4px; }
+    .measure-list li:last-child { border-bottom: none; padding-bottom: 0; }
+    .measure-list b { color: var(--muted); font-weight: 600; }
+
+    .no-specs { font-size: 13px; color: var(--muted); font-style: italic; }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 56px 20px; }
+    .empty-state i { font-size: 42px; color: var(--line); margin-bottom: 16px; }
+    .empty-state p { color: var(--muted); margin: 0; font-size: 16px; font-weight: 500; }
+
+    /* Phones and tablets: each job becomes a card */
+    @media (max-width: 899px) {
+        .table-card { background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; margin-top: 20px; }
+        .table-responsive { overflow: visible; }
+        .table-card table, .table-card tbody { display: block; width: 100%; white-space: normal; }
+        .table-card thead { display: none; }
+
+        .table-card tr { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; background: var(--surface);
+            border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .table-card tbody tr:hover td { background: transparent; }
+        .table-card td { display: block; padding: 0; border: 0; min-width: 0; word-break: break-word; font-size: 15px; }
+        .table-card td::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 3px; }
+
+        /* Ticket number is the card title, customer sits under it */
+        .table-card td.c-ticket { grid-column: 1 / -1; font-size: 18px; }
+        .table-card td.c-customer { grid-column: 1 / -1; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+        .table-card td.c-ticket::before, .table-card td.c-customer::before { display: none; }
+
+        /* Status select and measurements use the full card width */
+        .table-card td.c-status, .table-card td.c-specs { grid-column: 1 / -1; }
+        .status-select { max-width: none; padding: 12px 14px; font-size: 15px; }
+        details.specs-details { min-width: 0; }
+        details.specs-details summary { padding: 12px 14px; font-size: 14px; }
+
+        /* Empty state */
+        .table-card tr:has(td.c-empty) { display: block; padding: 0; }
+        .table-card td.c-empty::before { display: none; }
+        .table-card td.c-empty { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+    }
+</style>
+
+<main>
+    <h1>My Claimed Jobs</h1>
+    <p class="sub"><span class="chip"><i class="fa-solid fa-list-check"></i> Your Active Queue</span></p>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticket No</th>
+                        <th>Customer</th>
+                        <th>Garment & Qty</th>
+                        <th>Delivery Date</th>
+                        <th>Tailoring Status</th>
+                        <th>Measurements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in my_tickets %}
+                    <tr>
+                        <td class="c-ticket" data-label="Ticket No"><span class="ticket-id">{{ ticket.ticket_number|default:ticket.ticket_id }}</span></td>
+                        <td class="c-customer" data-label="Customer">{{ ticket.customer_id.name }}</td>
+                        <td data-label="Garment & Qty">
+                            {{ ticket.garment_type }}
+                            <br><span class="qty">(x{{ ticket.quantity }})</span>
+                        </td>
+                        <td data-label="Delivery Date">{{ ticket.expected_delivery_date }}</td>
+                        <td class="c-status" data-label="Tailoring Status">
+                            <form method="POST" action="/cutter_tailorapp/update_tailoring_status/{{ ticket.ticket_id }}">
+                                {% csrf_token %}
+                                <select name="tailoring_status" class="status-select" onchange="this.form.submit()">
+                                    <option value="pending" {% if ticket.tailoring_status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="in_progress" {% if ticket.tailoring_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="completed" {% if ticket.tailoring_status == 'completed' %}selected{% endif %}>Completed</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td class="c-specs" data-label="Measurements">
+                            {% if ticket.measurement_id %}
+                                <details class="specs-details">
+                                    <summary>Show Specs</summary>
+                                    <ul class="measure-list">
+                                        <li><b>Length:</b> <span>{{ ticket.measurement_id.length|default:"-" }}</span></li>
+                                        <li><b>Shoulder:</b> <span>{{ ticket.measurement_id.shoulder_back|default:"-" }} / {{ ticket.measurement_id.shoulder_front|default:"-" }}</span></li>
+                                        <!-- Add remaining measurements here identical to the cutter template -->
+                                    </ul>
+                                </details>
+                            {% else %}
+                                <span class="no-specs">No specs attached</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="c-empty">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-box-open"></i>
+                                <p>You have not claimed any jobs yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+{% include 'tailor_footer.html' %}

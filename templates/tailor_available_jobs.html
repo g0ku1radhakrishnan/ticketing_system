@@ -1,0 +1,106 @@
+{% include 'tailor_header.html' with page_title='Available Jobs' %}
+
+<style>
+    /* Chip styling for the subtitle */
+    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 999px;
+        background: var(--c-pending); color: var(--c-pending-ink); font-size: 13px; font-weight: 600; }
+
+    /* Card wrapper for the table */
+    .table-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; margin-top: 24px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+
+    /* Desktop table */
+    .table-responsive { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+    .table-card table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    .table-card th { padding: 16px 18px; background: var(--bg); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); border-bottom: 1px solid var(--line); font-weight: 700; }
+    .table-card td { padding: 16px 18px; border-bottom: 1px solid var(--line); font-size: 15px; vertical-align: middle; transition: background 0.15s; }
+    .table-card tr:last-child td { border-bottom: none; }
+    .table-card tbody tr:hover td { background: var(--bg); }
+
+    /* Typography & Buttons */
+    .ticket-id { font-weight: 700; color: var(--ink); }
+    .btn-claim { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; background: var(--brand); color: var(--brand-ink); border-radius: 999px; font-weight: 600; font-size: 13px; transition: opacity 0.15s, transform 0.15s; }
+    .btn-claim:hover { opacity: 0.9; transform: translateY(-2px); color: var(--brand-ink); }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 56px 20px; }
+    .empty-state i { font-size: 42px; color: var(--line); margin-bottom: 16px; }
+    .empty-state p { color: var(--muted); margin: 0; font-size: 16px; font-weight: 500; }
+
+    /* Phones and tablets: each job becomes a card */
+    @media (max-width: 899px) {
+        .table-card { background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; margin-top: 20px; }
+        .table-responsive { overflow: visible; }
+        .table-card table, .table-card tbody { display: block; width: 100%; white-space: normal; }
+        .table-card thead { display: none; }
+
+        .table-card tr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; background: var(--surface);
+            border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .table-card tbody tr:hover td { background: transparent; }
+        .table-card td { display: block; padding: 0; border: 0; min-width: 0; word-break: break-word; font-size: 15px; }
+        .table-card td::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
+
+        /* Ticket number is the card title, customer sits under it */
+        .table-card td.c-ticket { grid-column: 1 / -1; font-size: 18px; }
+        .table-card td.c-customer { grid-column: 1 / -1; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+        .table-card td.c-ticket::before, .table-card td.c-customer::before { display: none; }
+
+        /* Claim button spans the card */
+        .table-card td.c-action { grid-column: 1 / -1; padding-top: 4px; }
+        .table-card td.c-action::before { display: none; }
+        .table-card td.c-action .btn-claim { width: 100%; padding: 12px 16px; font-size: 15px; }
+
+        /* Empty state */
+        .table-card tr:has(td.c-empty) { display: block; padding: 0; }
+        .table-card td.c-empty::before { display: none; }
+        .table-card td.c-empty { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+    }
+</style>
+
+<main>
+    <h1>Available Jobs</h1>
+    <p class="sub"><span class="chip"><i class="fa-solid fa-scissors"></i> Ready for Stitching</span></p>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticket No</th>
+                        <th>Customer</th>
+                        <th>Garment</th>
+                        <th>Qty</th>
+                        <th>Delivery Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in available_tickets %}
+                    <tr>
+                        <td class="c-ticket" data-label="Ticket No"><span class="ticket-id">{{ ticket.ticket_number|default:ticket.ticket_id }}</span></td>
+                        <td class="c-customer" data-label="Customer">{{ ticket.customer_id.name }}</td>
+                        <td data-label="Garment">{{ ticket.garment_type }}</td>
+                        <td data-label="Qty">{{ ticket.quantity }}</td>
+                        <td data-label="Delivery Date">{{ ticket.expected_delivery_date }}</td>
+                        <td class="c-action">
+                            <a href="/cutter_tailorapp/tailor_claim_ticket/{{ ticket.ticket_id }}" class="btn-claim">
+                                <i class="fa-solid fa-hand-sparkles"></i> Claim Job
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="c-empty">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-inbox"></i>
+                                <p>No jobs ready for stitching right now.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+{% include 'tailor_footer.html' %}

@@ -1,0 +1,602 @@
+{% include 'admin_header.html' %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Manage Ticket</title>
+
+    <style>
+        /* All styles are scoped to .mt so they never clash with your header/footer */
+        .mt {
+            --mt-bg: var(--bg, #FCF8F6);
+            --mt-surface: var(--surface, #FFFFFF);
+            --mt-ink: var(--ink, #1F1626);
+            --mt-muted: var(--muted, #756B7A);
+            --mt-line: var(--line, #EEE5E8);
+            --mt-brand: var(--brand, #5B2145);
+            --mt-brand-ink: var(--brand-ink, #FFFFFF);
+            --mt-danger: #B3262F;
+            --mt-danger-soft: #FBD9DC;
+            --mt-green: #1E6B3C;
+            --mt-font: var(--font, 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif);
+            font-family: var(--mt-font);
+            color: var(--mt-ink);
+        }
+        .mt *, .mt *::before, .mt *::after { box-sizing: border-box; }
+        .mt h1 { margin: 0 0 18px; font-size: 28px; line-height: 1.15; font-weight: 700; }
+        .mt h2 { margin: 0; font-size: 18px; font-weight: 700; }
+        .mt a { text-decoration: none; }
+        .mt button { font: inherit; cursor: pointer; }
+        .mt :focus-visible { outline: 2px solid var(--mt-brand); outline-offset: 2px; }
+
+        /* Buttons */
+        .mt .mt-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 11px 22px; border-radius: 999px; border: 1px solid var(--mt-brand);
+            background: var(--mt-brand); color: var(--mt-brand-ink); font-weight: 600; font-size: 15px;
+            transition: filter .15s, background .15s;
+        }
+        .mt .mt-btn:hover { filter: brightness(1.12); }
+        .mt .mt-btn.ghost { background: transparent; color: var(--mt-brand); }
+        .mt .mt-btn.ghost:hover { background: var(--mt-line); filter: none; }
+        .mt .mt-btn.green { background: var(--mt-green); border-color: var(--mt-green); color: #fff; }
+        .mt .mt-btn.danger { background: transparent; color: var(--mt-danger); border-color: var(--mt-danger); }
+        .mt .mt-btn.danger:hover { background: var(--mt-danger-soft); filter: none; }
+        .mt .mt-btn.sm { padding: 7px 16px; font-size: 13px; }
+        .mt .mt-toolbar { margin-bottom: 18px; }
+
+        /* Form card */
+        .mt .mt-card { background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; padding: 22px 18px; }
+        .mt .mt-card > h2 { margin-bottom: 18px; font-size: 20px; }
+        .mt .mt-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--mt-line); }
+        .mt .mt-section:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+        .mt .mt-section h3 { margin: 0 0 14px; font-size: 15px; font-weight: 700; color: var(--mt-brand); }
+        .mt .mt-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .mt .field label, .mt .field .lbl { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        .mt .field input[type="text"], .mt .field input[type="date"], .mt .field select, .mt .field textarea {
+            width: 100%; padding: 12px 14px; font: inherit; color: var(--mt-ink); background: var(--mt-bg);
+            border: 1px solid var(--mt-line); border-radius: 12px; outline: none;
+        }
+        .mt .field textarea { resize: vertical; min-height: 96px; }
+        .mt .field input::placeholder, .mt .field textarea::placeholder { color: var(--mt-muted); }
+        .mt .field input:focus, .mt .field select:focus, .mt .field textarea:focus { border-color: var(--mt-brand); box-shadow: 0 0 0 3px rgba(91, 33, 69, .12); }
+        .mt .field input[type="file"] {
+            width: 100%; padding: 12px; font: inherit; color: var(--mt-muted); background: var(--mt-bg);
+            border: 1px dashed var(--mt-muted); border-radius: 12px;
+        }
+        .mt .field input[type="file"]::file-selector-button {
+            margin-right: 12px; padding: 8px 16px; border: 0; border-radius: 999px;
+            background: var(--mt-brand); color: var(--mt-brand-ink); font: inherit; font-weight: 600; cursor: pointer;
+        }
+        .mt .hint { display: block; margin-top: 6px; font-size: 13px; color: var(--mt-muted); }
+        .mt .mt-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 24px; }
+
+        /* Existing images (update form) */
+        .mt .thumbs { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+        .mt .thumb { text-align: center; padding: 8px; border: 1px solid var(--mt-line); border-radius: 14px; background: var(--mt-bg); }
+        .mt .thumb img { display: block; width: 80px; height: 80px; object-fit: cover; border-radius: 10px; margin-bottom: 6px; }
+        .mt .thumb label { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; font-weight: 600; color: var(--mt-danger); cursor: pointer; }
+
+        /* List heading + search */
+        .mt .mt-list-head { display: flex; align-items: center; gap: 10px; margin: 34px 0 14px; }
+        .mt .mt-count { font-size: 13px; font-weight: 600; padding: 2px 12px; border-radius: 999px; background: var(--mt-line); color: var(--mt-muted); }
+        .mt .mt-search { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+        .mt .mt-search .box { display: flex; flex: 1 1 320px; max-width: 560px; }
+        .mt .mt-search input[type="text"] {
+            flex: 1; min-width: 0; padding: 12px 18px; font: inherit; color: var(--mt-ink); background: var(--mt-surface);
+            border: 1px solid var(--mt-line); border-right: 0; border-radius: 999px 0 0 999px; outline: none;
+        }
+        .mt .mt-search input[type="text"]:focus { border-color: var(--mt-brand); }
+        .mt .mt-search input::placeholder { color: var(--mt-muted); }
+        .mt .mt-search .go { padding: 12px 22px; border: 0; font-weight: 600; background: var(--mt-brand); color: var(--mt-brand-ink); border-radius: 0 999px 999px 0; cursor: pointer; }
+        .mt .mt-search .reset { color: var(--mt-brand); font-weight: 600; }
+
+        /* Table (desktop: scrolls sideways inside its card) */
+        .mt .mt-table-wrap { background: var(--mt-surface); border: 1px solid var(--mt-line); border-radius: 18px; overflow-x: auto; max-width: none !important; }
+        .mt table { width: 100%; min-width: 1500px; border-collapse: collapse; }
+        .mt th { text-align: left; font-size: 13px; font-weight: 600; color: var(--mt-muted); background: var(--mt-bg); padding: 14px; border-bottom: 1px solid var(--mt-line); white-space: nowrap; }
+        .mt td { padding: 14px; border-bottom: 1px solid var(--mt-line); vertical-align: middle; white-space: nowrap; }
+        .mt td.cust-cell, .mt td.img-cell { white-space: normal; }
+        .mt td.cust-cell { font-weight: 600; }
+        .mt td.cust-cell small { display: block; font-weight: 400; color: var(--mt-muted); }
+        .mt td.tk-cell b { color: var(--mt-brand); }
+        .mt td.img-cell img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; margin-right: 6px; vertical-align: middle; }
+        .mt tbody tr:last-child td { border-bottom: 0; }
+        .mt tbody tr:hover { background: var(--mt-bg); }
+        .mt .row-actions { display: flex; gap: 8px; }
+        .mt .empty { text-align: center; color: var(--mt-muted); padding: 32px 16px; white-space: normal; }
+
+        /* Status pills: colour follows the value */
+        .mt .pill { display: inline-block; padding: 2px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--mt-line); color: var(--mt-ink); text-transform: capitalize; }
+        .mt .pill.s-pending, .mt .pill.s-partial, .mt .pill.s-high { background: #FDEBC8; color: #8A5A00; }
+        .mt .pill.s-in-progress { background: #DFE7FB; color: #2C4A8F; }
+        .mt .pill.s-completed, .mt .pill.s-delivered, .mt .pill.s-paid { background: #D5EFD9; color: #1E6B3C; }
+        .mt .pill.s-cancelled, .mt .pill.s-unpaid, .mt .pill.s-urgent { background: #FBD9DC; color: #B3262F; }
+
+        @media (min-width: 600px) {
+            .mt .mt-grid { grid-template-columns: 1fr 1fr; }
+            .mt .mt-grid .full { grid-column: 1 / -1; }
+            .mt .mt-card { padding: 28px; }
+        }
+        @media (min-width: 900px) { .mt h1 { font-size: 34px; } }
+
+        /* Phones and tablets: each ticket becomes a card */
+        @media (max-width: 899px) {
+            .mt .mt-btn.add { width: 100%; }
+            .mt .mt-actions .mt-btn { flex: 1; }
+            .mt .mt-table-wrap { background: none; border: 0; border-radius: 0; overflow: visible; }
+            .mt table, .mt tbody { display: block; width: 100%; min-width: 0; }
+            .mt thead { display: none; }
+            .mt tr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; background: var(--mt-surface);
+                border: 1px solid var(--mt-line); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+            .mt tbody tr:hover { background: var(--mt-surface); }
+            .mt td { display: block; padding: 0; border: 0; min-width: 0; white-space: normal; word-break: break-word; }
+            .mt td::before { content: attr(data-label); display: block; font-size: 12px; font-weight: 600; color: var(--mt-muted); margin-bottom: 2px; }
+            .mt td.tk-cell { grid-column: 1 / -1; font-size: 18px; }
+            .mt td.cust-cell { grid-column: 1 / -1; padding-bottom: 12px; border-bottom: 1px solid var(--mt-line); }
+            .mt td.tk-cell::before, .mt td.cust-cell::before { display: none; }
+            .mt td.img-cell { grid-column: 1 / -1; }
+            .mt td.actions-cell { grid-column: 1 / -1; padding-top: 4px; }
+            .mt td.actions-cell::before { display: none; }
+            .mt .row-actions .mt-btn { flex: 1; }
+            .mt td.empty { grid-column: 1 / -1; text-align: center; }
+            .mt td.empty::before { display: none; }
+            .mt tr:has(td.empty) { display: block; padding: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) { .mt * { transition: none !important; } }
+    </style>
+</head>
+<body>
+
+<main class="mt">
+
+<h1>Manage Ticket</h1>
+
+    {% if update_data %}
+    <form method="POST" action="/admin_update_ticket/{{ update_data.ticket_id }}" enctype="multipart/form-data" class="mt-card">
+        {% csrf_token %}
+        <h2>Update Ticket ({{ update_data.ticket_number|default:update_data.ticket_id }})</h2>
+
+        <div class="mt-section">
+            <h3>Customer</h3>
+            <div class="mt-grid">
+                <div class="field">
+                    <label for="customerSelect">Customer</label>
+                    <select name="customer_id" id="customerSelect" required onchange="fetchCustomerMeasurements()">
+                        {% for c in customers %}
+                            <option value="{{ c.Customer_id }}" {% if c.Customer_id == update_data.customer_id.Customer_id %}selected{% endif %}>
+                                {{ c.name }} ({{ c.phone }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="measurementSelect">Measurement ID</label>
+                    <select name="measurement_id" id="measurementSelect">
+                        <option value="">-- Select Measurement --</option>
+                        {% for m in measurements %}
+                            {% if m.customer_id.Customer_id == update_data.customer_id.Customer_id %}
+                                <option value="{{ m.measurement_id }}" {% if update_data.measurement_id and m.measurement_id == update_data.measurement_id.measurement_id %}selected{% endif %}>
+                                    Measurement #{{ m.measurement_id }} - {{ m.date|default:"" }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-section">
+            <h3>Assigned to</h3>
+            <div class="mt-grid">
+                <div class="field">
+                    <label for="u_cutter">Cutter</label>
+                    <select name="cutter_id" id="u_cutter">
+                        <option value="">-- None --</option>
+                        {% for cut in cutters %}
+                            <option value="{{ cut.cutter_id }}" {% if update_data.cutter_id and cut.cutter_id == update_data.cutter_id.cutter_id %}selected{% endif %}>
+                                {{ cut.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="u_tailor">Tailor</label>
+                    <select name="tailor_id" id="u_tailor">
+                        <option value="">-- None --</option>
+                        {% for t in tailors %}
+                            <option value="{{ t.tailor_id }}" {% if update_data.tailor_id and t.tailor_id == update_data.tailor_id.tailor_id %}selected{% endif %}>
+                                {{ t.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-section">
+            <h3>Order details</h3>
+            <div class="mt-grid">
+                <div class="field">
+                    <label for="u_garment">Garment Type</label>
+                    <input type="text" id="u_garment" name="garment_type" value="{{ update_data.garment_type }}" required>
+                </div>
+                <div class="field">
+                    <label for="u_qty">Quantity</label>
+                    <input type="text" id="u_qty" name="quantity" value="{{ update_data.quantity }}" required>
+                </div>
+                <div class="field">
+                    <label for="u_priority">Priority</label>
+                    <select name="priority" id="u_priority">
+                        <option value="low" {% if update_data.priority == "low" %}selected{% endif %}>Low</option>
+                        <option value="normal" {% if update_data.priority == "normal" %}selected{% endif %}>Normal</option>
+                        <option value="high" {% if update_data.priority == "high" %}selected{% endif %}>High</option>
+                        <option value="urgent" {% if update_data.priority == "urgent" %}selected{% endif %}>Urgent</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="u_delivery">Expected Delivery</label>
+                    <input type="date" id="u_delivery" name="expected_delivery_date" value="{{ update_data.expected_delivery_date }}" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-section">
+            <h3>Progress</h3>
+            <div class="mt-grid">
+                <div class="field">
+                    <label for="u_status">Status</label>
+                    <select name="status" id="u_status">
+                        <option value="pending" {% if update_data.status == "pending" %}selected{% endif %}>Pending</option>
+                        <option value="in progress" {% if update_data.status == "in progress" %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if update_data.status == "completed" %}selected{% endif %}>Completed</option>
+                        <option value="delivered" {% if update_data.status == "delivered" %}selected{% endif %}>Delivered</option>
+                        <option value="cancelled" {% if update_data.status == "cancelled" %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="u_payment">Payment Status</label>
+                    <select name="payment_status" id="u_payment">
+                        <option value="unpaid" {% if update_data.payment_status == "unpaid" %}selected{% endif %}>Unpaid</option>
+                        <option value="partial" {% if update_data.payment_status == "partial" %}selected{% endif %}>Partial</option>
+                        <option value="paid" {% if update_data.payment_status == "paid" %}selected{% endif %}>Paid</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="u_alteration">Alteration Status</label>
+                    <select name="alteration_status" id="u_alteration">
+                        <option value="pending" {% if update_data.alteration_status == "pending" %}selected{% endif %}>Pending</option>
+                        <option value="in progress" {% if update_data.alteration_status == "in progress" %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if update_data.alteration_status == "completed" %}selected{% endif %}>Completed</option>
+                        <option value="not required" {% if update_data.alteration_status == "not required" %}selected{% endif %}>Not Required</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="u_cutting">Cutting Status</label>
+                    <select name="cutting_status" id="u_cutting">
+                        <option value="pending" {% if update_data.cutting_status == "pending" %}selected{% endif %}>Pending</option>
+                        <option value="in progress" {% if update_data.cutting_status == "in progress" %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if update_data.cutting_status == "completed" %}selected{% endif %}>Completed</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="u_tailoring">Tailoring Status</label>
+                    <select name="tailoring_status" id="u_tailoring">
+                        <option value="pending" {% if update_data.tailoring_status == "pending" %}selected{% endif %}>Pending</option>
+                        <option value="in progress" {% if update_data.tailoring_status == "in progress" %}selected{% endif %}>In Progress</option>
+                        <option value="completed" {% if update_data.tailoring_status == "completed" %}selected{% endif %}>Completed</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-section">
+            <h3>Design and notes</h3>
+            <div class="mt-grid">
+                <div class="field full">
+                    <span class="lbl">Design / Pattern Image</span>
+                    <!-- Show existing images with Delete checkboxes -->
+                    {% if existing_images %}
+                        <div class="thumbs">
+                        {% for img in existing_images %}
+                            <div class="thumb">
+                                <!-- Ensure the image URL works -->
+                                {% if img.image %}
+                                    <img src="/static/image/{{img.image.url }}" width="80" height="80" alt="">
+                                {% endif %}
+                                <label>
+                                    <input type="checkbox" name="delete_images" value="{{ img.id }}"> Delete
+                                </label>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Input to add MORE images -->
+                    <input type="file" name="image" multiple accept="image/*">
+                    <small class="hint">Uploading files here will add to existing images.</small>
+                </div>
+                <div class="field full">
+                    <label for="u_notes">Notes</label>
+                    <textarea id="u_notes" name="notes" rows="3">{{ update_data.notes|default:"" }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-actions">
+            <a href="/admin_manage_ticket" class="mt-btn ghost">Cancel</a>
+            <button type="submit" class="mt-btn">Update Ticket</button>
+        </div>
+    </form>
+
+    {% else %}
+    <!-- ======= CREATE TICKET BUTTON ======= -->
+    <div class="mt-toolbar">
+        <button type="button" class="mt-btn green add" onclick="toggleAddForm()">+ Create Ticket</button>
+    </div>
+
+    <!-- ======= CREATE FORM (Hidden by default) ======= -->
+    <div id="addFormContainer" style="display: none; margin-bottom: 8px;">
+    <form method="POST" action="/admin_manage_ticket" enctype="multipart/form-data" class="mt-card">
+        {% csrf_token %}
+        <h2>Create Ticket</h2>
+
+        <div class="mt-grid">
+            <div class="field">
+                <label for="customerSearchInput">Customer</label>
+                <!-- Search input with datalist -->
+                <input
+                    type="text"
+                    id="customerSearchInput"
+                    list="customerDatalist"
+                    placeholder="Type customer name or phone..."
+                    autocomplete="off"
+                    required
+                >
+                <datalist id="customerDatalist"></datalist>
+
+                <!-- Hidden field that submits actual customer_id to Django -->
+                <input type="hidden" name="customer_id" id="selectedCustomerId" required>
+            </div>
+            <div class="field">
+                <label for="measurementSelect">Measurement ID</label>
+                <select name="measurement_id" id="measurementSelect">
+                    <option value="">-- First Select a Customer --</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="c_garment">Garment Type</label>
+                <input type="text" id="c_garment" name="garment_type" placeholder="e.g., Shirt, Suit, Kurta" required>
+            </div>
+            <div class="field">
+                <label for="c_qty">Quantity</label>
+                <input type="text" id="c_qty" name="quantity" value="1" required>
+            </div>
+            <div class="field">
+                <label for="c_priority">Priority</label>
+                <select name="priority" id="c_priority">
+                    <option value="low">Low</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="c_delivery">Expected Delivery</label>
+                <input type="date" id="c_delivery" name="expected_delivery_date" required>
+            </div>
+            <div class="field full">
+                <label for="c_image">Design / Pattern Image</label>
+                <input type="file" id="c_image" name="image" multiple accept="image/*">
+            </div>
+            <div class="field full">
+                <label for="c_notes">Notes</label>
+                <textarea id="c_notes" name="notes" rows="3" placeholder="Special requirements, fabric notes..."></textarea>
+            </div>
+        </div>
+
+        <div class="mt-actions">
+            <button type="button" class="mt-btn ghost" onclick="toggleAddForm()">Cancel</button>
+            <button type="submit" class="mt-btn">Create Ticket</button>
+        </div>
+    </form>
+    </div>
+
+    <div class="mt-list-head">
+        <h2>Ticket List</h2>
+        <span class="mt-count">{{ tickets|length }}</span>
+    </div>
+
+    <form method="GET" action="/admin_manage_ticket" enctype="multipart/form-data" class="mt-search">
+        <div class="box">
+            <input type="text" name="search" placeholder="Search ticket no, customer, phone, garment..." value="{{ search_query }}">
+            <input type="submit" value="Search" class="go">
+        </div>
+        {% if search_query %}
+            <a href="/admin_manage_ticket" class="reset">Reset</a>
+        {% endif %}
+    </form>
+
+    <div class="mt-table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket No</th>
+                    <th>Customer</th>
+                    <th>Garment</th>
+                    <th>Qty</th>
+                    <th>Priority</th>
+                    <th>Order Date</th>
+                    <th>Delivery</th>
+                    <th>Status</th>
+                    <th>Cutting</th>
+                    <th>Tailoring</th>
+                    <th>Image</th>
+                    <th>Payment</th>
+                    <th>Cutter</th>
+                    <th>Tailor</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td class="tk-cell" data-label="Ticket No"><b>{{ ticket.ticket_number|default:ticket.ticket_id }}</b></td>
+                    <td class="cust-cell" data-label="Customer">{{ ticket.customer_id.name }}<small>{{ ticket.customer_id.phone }}</small></td>
+                    <td data-label="Garment">{{ ticket.garment_type }}</td>
+                    <td data-label="Qty">{{ ticket.quantity }}</td>
+                    <td data-label="Priority"><span class="pill s-{{ ticket.priority|slugify }}">{{ ticket.priority }}</span></td>
+                    <td data-label="Order Date">{{ ticket.order_date }}</td>
+                    <td data-label="Delivery">{{ ticket.expected_delivery_date }}</td>
+                    <td data-label="Status"><span class="pill s-{{ ticket.status|slugify }}">{{ ticket.status }}</span></td>
+                    <td data-label="Cutting"><span class="pill s-{{ ticket.cutting_status|slugify }}">{{ ticket.cutting_status }}</span></td>
+                    <td data-label="Tailoring"><span class="pill s-{{ ticket.tailoring_status|slugify }}">{{ ticket.tailoring_status }}</span></td>
+                    <td class="img-cell" data-label="Image">
+                        {% if ticket.images.all %}
+                            <!-- Loop through all images attached to this ticket -->
+                            {% for img in ticket.images.all %}
+                                <a href="/static/image/{{img.image.url }}" target="_blank">
+                                    <img src="/static/image/{{ img.image.url }}" width="40" height="40" alt="">
+                                </a>
+                            {% endfor %}
+                        {% else %}
+                            No images
+                        {% endif %}
+                    </td>
+                    <td data-label="Payment"><span class="pill s-{{ ticket.payment_status|slugify }}">{{ ticket.payment_status }}</span></td>
+                    <td data-label="Cutter">{{ ticket.cutter_id.name|default:"-" }}</td>
+                    <td data-label="Tailor">{{ ticket.tailor_id.name|default:"-" }}</td>
+                    <td class="actions-cell">
+                        <div class="row-actions">
+                            <a href="/admin_update_ticket/{{ ticket.ticket_id }}" class="mt-btn sm ghost">Edit</a>
+                            <a href="/admin_delete_ticket/{{ ticket.ticket_id }}" class="mt-btn sm danger" onclick="return confirm('Are you sure you want to delete this ticket?');">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="15" class="empty">No tickets found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+<script>
+const searchInput = document.getElementById('customerSearchInput');
+const datalist = document.getElementById('customerDatalist');
+const hiddenIdInput = document.getElementById('selectedCustomerId');
+const measurementSelect = document.getElementById('measurementSelect');
+
+// Show / hide the create form
+function toggleAddForm() {
+    var form = document.getElementById('addFormContainer');
+    if (!form) return;
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (searchInput) searchInput.focus({ preventScroll: true });
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+function checkForSelectedCustomer() {
+    const val = searchInput.value.trim();
+    const options = datalist.querySelectorAll('option');
+    let matchedId = null;
+
+    options.forEach(opt => {
+        if (opt.value === val) {
+            matchedId = opt.getAttribute('data-id');
+        }
+    });
+
+    if (matchedId) {
+        hiddenIdInput.value = matchedId;
+        loadMeasurements(matchedId);
+        return true;
+    }
+    return false;
+}
+
+if (searchInput && datalist && hiddenIdInput && measurementSelect) {
+    // 1. Trigger when typing
+    searchInput.addEventListener('input', function () {
+        // If the input matches a selected option, load measurements immediately
+        if (checkForSelectedCustomer()) {
+            return;
+        }
+
+        // Otherwise, reset hidden ID and search for suggestions
+        hiddenIdInput.value = '';
+        measurementSelect.innerHTML = '<option value="">-- First Select a Customer --</option>';
+
+        const query = this.value.trim();
+        if (query.length > 0) {
+            fetch(`/customer_search_suggestions/?term=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    datalist.innerHTML = '';
+                    data.forEach(cust => {
+                        const opt = document.createElement('option');
+                        opt.value = cust.label;
+                        opt.setAttribute('data-id', cust.id);
+                        datalist.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error(err));
+        }
+    });
+
+    // 2. Trigger on dropdown click/blur selection
+    searchInput.addEventListener('change', function () {
+        checkForSelectedCustomer();
+    });
+}
+
+// 3. Fetch and populate measurements
+function loadMeasurements(customerId) {
+    if (!measurementSelect) return;
+    measurementSelect.innerHTML = '<option value="">Loading measurements...</option>';
+
+    fetch(`/get_customer_measurements/?customer_id=${customerId}`)
+        .then(res => res.json())
+        .then(data => {
+            measurementSelect.innerHTML = '';
+            if (data.length === 0) {
+                measurementSelect.innerHTML = '<option value="">-- No measurements found for this customer --</option>';
+            } else {
+                measurementSelect.innerHTML = '<option value="">-- Select Measurement --</option>';
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.measurement_id;
+                    opt.textContent = item.label;
+                    measurementSelect.appendChild(opt);
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching measurements:', err);
+            measurementSelect.innerHTML = '<option value="">-- Error loading measurements --</option>';
+        });
+}
+
+// 4. Update form: reload measurements when another customer is chosen
+function fetchCustomerMeasurements() {
+    var select = document.getElementById('customerSelect');
+    if (select && select.value) {
+        loadMeasurements(select.value);
+    }
+}
+</script>
+
+</main>
+
+{% include 'admin_footer.html' %}
+
+</body>
+</html>
